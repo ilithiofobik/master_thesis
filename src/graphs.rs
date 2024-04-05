@@ -1,3 +1,4 @@
+use core::num;
 use std::collections::HashSet;
 
 pub struct Graph {
@@ -34,6 +35,23 @@ impl Graph {
         }
     }
 
+    pub fn complete(num_of_vertices: usize) -> Self {
+        let mut neighbours = Vec::with_capacity(num_of_vertices);
+        for i in 0..num_of_vertices {
+            let set = (0..num_of_vertices)
+                .filter(|&j| i != j)
+                .collect::<HashSet<usize>>();
+
+            neighbours.push(set);
+        }
+
+        Graph {
+            num_of_vertices,
+            num_of_edges: num_of_vertices * (num_of_vertices - 1) / 2,
+            neighbours,
+        }
+    }
+
     pub fn add_edge(&mut self, from: usize, to: usize) -> bool {
         if from < self.num_of_vertices && to < self.num_of_vertices {
             self.neighbours[from].insert(to);
@@ -43,6 +61,10 @@ impl Graph {
         }
 
         false
+    }
+
+    pub fn num_of_vertices(&self) -> usize {
+        self.num_of_vertices
     }
 
     pub fn num_of_edges(&self) -> usize {
