@@ -8,6 +8,13 @@ pub mod graphs;
 /// This module contains a planarity testing algorithm.
 pub mod planarity;
 
+/// # PQ-Tree
+///     
+/// This module contains a PQ-Tree implementation.
+pub mod pq_tree;
+
+pub mod rand_graphs;
+
 /// # Tests
 ///
 /// This module contains tests for the library.
