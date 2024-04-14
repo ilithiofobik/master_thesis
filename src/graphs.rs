@@ -72,14 +72,20 @@ impl Graph {
         vertex < self.num_of_vertices
     }
 
+    pub fn has_edge(&self, from: usize, to: usize) -> bool {
+        self.neighbours[from].contains(&to)
+    }
+
     pub fn add_edge(&mut self, from: usize, to: usize) -> bool {
         // both vertices must be valid
         if !self.is_valid_vertex(from) || !self.is_valid_vertex(to) {
+            println!("Invalid vertices: {} -> {}", from, to);
             return false;
         }
 
         // no self loops nor multi-edges
         if from == to || self.neighbours[from].contains(&to) {
+            println!("Self loop or multi-edge: {} -> {}", from, to);
             return false;
         }
 
@@ -96,5 +102,14 @@ impl Graph {
 
     pub fn num_of_edges(&self) -> usize {
         self.num_of_edges
+    }
+
+    pub fn print_edges(&self) {
+        println!("Edges:");
+        for (from, tos) in self.neighbours.iter().enumerate() {
+            for to in tos {
+                println!("{} -> {}", from, to);
+            }
+        }
     }
 }
