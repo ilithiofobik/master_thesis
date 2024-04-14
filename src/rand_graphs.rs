@@ -91,7 +91,6 @@ fn remove_vertex(ppbs: &mut HashMap<(usize, usize), f64>, n: usize, v: usize) {
 }
 
 fn update_vertex(
-    graph: &Graph,
     dn: &[usize],
     ppbs: &mut HashMap<(usize, usize), f64>,
     alpha: &HashMap<(usize, usize), f64>,
@@ -100,14 +99,14 @@ fn update_vertex(
 ) {
     for x in 0..v {
         let p = calc_p(dn, alpha, x, v);
-        if p > 0.0 && !graph.has_edge(x, v) {
+        if p > 0.0 && ppbs.contains_key(&(x, v)) {
             ppbs.insert((x, v), p);
         }
     }
     for y in v + 1..n {
         let p = calc_p(dn, alpha, v, y);
-        if p > 0.0 && !graph.has_edge(v, y) {
-            ppbs.insert((y, v), p);
+        if p > 0.0 && ppbs.contains_key(&(v, y)) {
+            ppbs.insert((v, y), p);
         }
     }
 }
@@ -149,23 +148,36 @@ fn try_generate_with_degree_seq(
         dn[b] -= 1;
         ppbs.remove(&(a, b));
 
+        if dn[a] == 0 {
+            remove_vertex(&mut ppbs, n, a);
+        } else {
+            update_vertex(&dn, &mut ppbs, alpha, n, a);
+        }
+
+        if dn[b] == 0 {
+            remove_vertex(&mut ppbs, n, b);
+        } else {
+            update_vertex(&dn, &mut ppbs, alpha, n, b);
+        }
+
         // update and remove zero values
-        ppbs = ppbs
-            .into_iter()
-            .map(|((x, y), _)| ((x, y), calc_p(&dn, alpha, x, y)))
-            .filter(|(_, p)| *p > 0.0)
-            .collect::<HashMap<(usize, usize), f64>>();
+        // ppbs = ppbs
+        //     .into_iter()
+        //     .map(|((x, y), _)| ((x, y), calc_p(&dn, alpha, x, y)))
+        //     .filter(|(_, p)| *p > 0.0)
+        //     .collect::<HashMap<(usize, usize), f64>>();
     }
 
     if graph.num_of_edges() != m {
         println!("Num of edges: {}", graph.num_of_edges());
+        eprintln!("Num of edges: {}", graph.num_of_edges());
         return Err("Failed to generate a graph. Not enough edges.");
     }
 
     Ok(graph)
 }
 
-pub fn random_with_degree_seq(d: &[usize]) -> Result<Graph, &'static str> {
+pub fn random_with_degree_seq(d: &[usize]) -> Result<(Graph, usize), &'static str> {
     if !is_graphical(d) {
         return Err("The degree sequence is not graphical.");
     }
@@ -174,11 +186,13 @@ pub fn random_with_degree_seq(d: &[usize]) -> Result<Graph, &'static str> {
     let m = d.iter().sum::<usize>() / 2;
     let d_max = d.into_iter().max().unwrap_or(&0);
     let max_iter = 100 * m * d_max;
+    let mut try_num = 0;
 
     for _ in 0..max_iter {
+        try_num += 1;
         let graph = try_generate_with_degree_seq(d, &alpha, &ppbs);
-        if graph.is_ok() {
-            return graph;
+        if let Ok(g) = graph {
+            return Ok((g, try_num));
         }
     }
 
