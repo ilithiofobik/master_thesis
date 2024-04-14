@@ -152,7 +152,7 @@ fn try_generate_with_degree_seq(
         // update and remove zero values
         ppbs = ppbs
             .into_iter()
-            .map(|((x, y), _)| ((x, y), calc_p(&dn, alpha, a, b)))
+            .map(|((x, y), _)| ((x, y), calc_p(&dn, alpha, x, y)))
             .filter(|(_, p)| *p > 0.0)
             .collect::<HashMap<(usize, usize), f64>>();
     }
