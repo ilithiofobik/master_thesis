@@ -99,13 +99,13 @@ fn update_vertex(
 ) {
     for x in 0..v {
         let p = calc_p(dn, alpha, x, v);
-        if p > 0.0 && ppbs.contains_key(&(x, v)) {
+        if ppbs.contains_key(&(x, v)) {
             ppbs.insert((x, v), p);
         }
     }
     for y in v + 1..n {
         let p = calc_p(dn, alpha, v, y);
-        if p > 0.0 && ppbs.contains_key(&(v, y)) {
+        if ppbs.contains_key(&(v, y)) {
             ppbs.insert((v, y), p);
         }
     }

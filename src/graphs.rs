@@ -1,5 +1,6 @@
 use fastrand;
 use std::collections::HashSet;
+use std::ops::Range;
 
 pub struct Graph {
     num_of_vertices: usize,
@@ -98,6 +99,10 @@ impl Graph {
 
     pub fn num_of_vertices(&self) -> usize {
         self.num_of_vertices
+    }
+
+    pub fn vertices(&self) -> Range<usize> {
+        0..self.num_of_vertices
     }
 
     pub fn num_of_edges(&self) -> usize {
