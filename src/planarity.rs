@@ -54,6 +54,8 @@ struct Node {
     separated_dfs_children: Vec<Rc<RwLock<Node>>>,
     parent_edge: Option<Rc<RwLock<Edge>>>,
     list_node: LinkedList<Rc<RwLock<Node>>>,
+    back_edges: Vec<Rc<RwLock<Edge>>>,
+    tree_edges: Vec<Rc<RwLock<Edge>>>,
 }
 
 struct Edge {
@@ -78,6 +80,8 @@ impl Default for Node {
             separated_dfs_children: Vec::new(),
             parent_edge: None,
             list_node: LinkedList::new(),
+            back_edges: Vec::new(),
+            tree_edges: Vec::new(),
         }
     }
 }
@@ -92,6 +96,7 @@ struct OrientDfsStackInfo {
     current: usize,
     parent: usize,
     backedge: bool,
+    parent_edge: (usize, usize),
 }
 
 impl Planarity<'_> {
@@ -101,25 +106,71 @@ impl Planarity<'_> {
         Planarity { graph, n, nodes }
     }
 
-    fn dfs_orient(&self, visited: &mut Vec<Option<Node>>, v: usize, current_dfi: usize) -> usize {
+    fn create_new_node(
+        &mut self,
+        visited: &mut Vec<Option<Node>>,
+        graph_vertex: usize,
+        parent_idx: usize,
+        dfi: usize,
+    ) -> Node {
+        let mut child = Node::default();
+        let parent = visited[parent_idx];
+
+        child
+    }
+
+    fn dfs_orient(&mut self, visited: &mut Vec<Option<Node>>, v: usize, current_dfi: &mut usize) {
         let mut stack: Vec<OrientDfsStackInfo> = Vec::new();
         stack.push(OrientDfsStackInfo {
             current: v,
             parent: 0,
             backedge: false,
+            parent_edge: (0, 0),
         });
 
         while let Some(info) = stack.pop() {
             if info.backedge {
                 // process backedge
-                //   let current = visited.get_mut(&info.current).unwrap();
-                //    *current.least_ancestor
+                let current = visited[info.current].as_mut().unwrap();
+                current.lowpoint = current.dfs_index;
+                current.least_ancestor = current.dfs_index;
+
+                for back_edge in (*current).back_edges.iter() {
+                    current.least_ancestor = std::cmp::min(
+                        current.least_ancestor,
+                        back_edge.read().unwrap().target.read().unwrap().dfs_index,
+                    );
+                }
+
+                for tree_edge in (*current).tree_edges.iter() {
+                    current.lowpoint = std::cmp::min(
+                        current.least_ancestor,
+                        tree_edge.read().unwrap().target.read().unwrap().lowpoint,
+                    );
+                }
+
+                current.lowpoint = std::cmp::min(current.lowpoint, current.least_ancestor);
             } else {
                 // process forward edge
+                if visited[info.current].is_some() {
+                    continue;
+                }
+
+                stack.push(OrientDfsStackInfo {
+                    current: info.current,
+                    parent: info.parent,
+                    backedge: true,
+                    parent_edge: info.parent_edge,
+                });
+
+                let current = self.create_new_node(
+                    visited,
+                    info.current,
+                    info.parent,
+                    *current_dfi,
+                );
             }
         }
-
-        0
     }
 
     // sorting vertices by lowpoint
@@ -144,7 +195,7 @@ impl Planarity<'_> {
 
         for v in self.graph.vertices() {
             if visited[v].is_none() {
-                current_dfi = self.dfs_orient(&mut visited, v, current_dfi);
+                self.dfs_orient(&mut visited, v, &mut current_dfi);
             }
         }
 
