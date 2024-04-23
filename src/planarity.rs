@@ -6,34 +6,6 @@ use std::hash::Hash;
 use std::rc::Rc;
 use std::sync::RwLock;
 
-enum AdjacencyListLink {
-    V(usize),
-    E(usize),
-    R(usize),
-}
-
-struct RootVertex {
-    link: (AdjacencyListLink, AdjacencyListLink),
-    parent: usize,
-}
-
-struct HalfEdge {
-    link: (AdjacencyListLink, AdjacencyListLink),
-    neighbor: usize,
-    sign: bool, // true == +, false == -
-}
-
-struct VertexInfo {
-    dfs_parent: usize,
-    least_ancestor: usize,
-    lowpoint: usize,
-    visited: usize,
-    backedge_flag: usize,
-    pertinent_roots: Vec<usize>,
-    separated_dfs_children: Vec<usize>,
-    p_node_in_children_of_partent: usize, // TODO: should be a pointer?
-}
-
 struct EmbeddingGraph {
     n: usize,
     m: usize,
@@ -99,12 +71,21 @@ struct OrientDfsStackInfo {
     parent_edge: (usize, usize),
 }
 
+enum BoyerMyrvoldEdgeType {
+    Back,
+    Dfs,
+    DfsParallel,
+    BackDeleted,
+}
+
 impl Planarity<'_> {
     pub fn new(graph: &Graph) -> Planarity {
         let n = graph.num_of_vertices();
         let nodes = vec![];
         Planarity { graph, n, nodes }
     }
+
+    fn computeDfs() {}
 
     fn create_new_node(
         &mut self,
@@ -114,7 +95,7 @@ impl Planarity<'_> {
         dfi: usize,
     ) -> Node {
         let mut child = Node::default();
-        let parent = visited[parent_idx];
+        //   let parent = visited[parent_idx];
 
         child
     }
@@ -163,12 +144,8 @@ impl Planarity<'_> {
                     parent_edge: info.parent_edge,
                 });
 
-                let current = self.create_new_node(
-                    visited,
-                    info.current,
-                    info.parent,
-                    *current_dfi,
-                );
+                let current =
+                    self.create_new_node(visited, info.current, info.parent, *current_dfi);
             }
         }
     }
