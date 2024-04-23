@@ -13,15 +13,16 @@ fn is_graphical(d_seq: &[usize]) -> bool {
     let mut left_sum = 0;
     let mut d_sorted = d_seq.to_vec();
     d_sorted.sort_by(|a, b| b.cmp(a));
+
     let mut partial_sums = vec![0; n];
     partial_sums[0] = d_sorted[0];
     for i in 1..n {
         partial_sums[i] = partial_sums[i - 1] + d_sorted[i];
     }
 
-    for k  in 0..n {
+    for k in 0..n {
         left_sum += d_sorted[k];
-        let bigger_count = (k+1..n).take_while(|j| d_sorted[*j] > k + 1).count();
+        let bigger_count = (k + 1..n).take_while(|j| d_sorted[*j] > k + 1).count();
         let smaller_sum = partial_sums[n - 1] - partial_sums[k + bigger_count];
 
         if left_sum > (k + bigger_count) * (k + 1) + smaller_sum {

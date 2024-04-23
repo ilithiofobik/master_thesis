@@ -28,3 +28,15 @@ fn bliztstein_generation_test() {
     ];
     blizstein_test(&d);
 }
+
+#[test]
+fn bliztstein_generation_complete_test() {
+    let d = vec![99; 100];
+    blizstein_test(&d);
+}
+
+#[test]
+fn bliztstein_generation_non_graphical_test() {
+    let d = vec![4, 3, 2, 1, 0];
+    assert_eq!(bliztstein_generation(&d).is_err(), true);
+}
