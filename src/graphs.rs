@@ -1,10 +1,11 @@
 use fastrand;
+use std::collections::HashSet;
 use std::ops::Range;
 
 pub struct Graph {
     num_of_vertices: usize,
     num_of_edges: usize,
-    neighbours: Vec<Vec<usize>>,
+    neighbours: Vec<HashSet<usize>>,
 }
 
 impl Default for Graph {
@@ -25,7 +26,7 @@ impl Graph {
     pub fn empty(num_of_vertices: usize) -> Self {
         let mut neighbours = Vec::new();
         for _ in 0..num_of_vertices {
-            neighbours.push(Vec::new());
+            neighbours.push(HashSet::new());
         }
 
         Graph {
@@ -56,7 +57,7 @@ impl Graph {
         for i in 0..num_of_vertices {
             let set = (0..num_of_vertices)
                 .filter(|&j| i != j)
-                .collect::<Vec<usize>>();
+                .collect::<HashSet<usize>>();
 
             neighbours.push(set);
         }
@@ -89,8 +90,8 @@ impl Graph {
             return false;
         }
 
-        self.neighbours[from].push(to);
-        self.neighbours[to].push(from);
+        self.neighbours[from].insert(to);
+        self.neighbours[to].insert(from);
         self.num_of_edges += 1;
 
         true
@@ -108,7 +109,7 @@ impl Graph {
         self.num_of_edges
     }
 
-    pub fn neighbours(&self, vertex: usize) -> Option<&Vec<usize>> {
+    pub fn neighbours(&self, vertex: usize) -> Option<&HashSet<usize>> {
         if self.is_valid_vertex(vertex) {
             Some(&self.neighbours[vertex])
         } else {

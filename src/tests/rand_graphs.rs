@@ -16,12 +16,15 @@ fn blizstein_test(d: &[usize]) {
 
 #[test]
 fn bliztstein_generation_regular_test() {
-    let d = vec![3; 10];
+    let d = vec![10; 100];
     blizstein_test(&d);
 }
 
 #[test]
 fn bliztstein_generation_test() {
-    let d = vec![3, 2, 2, 2, 1];
+    let d = vec![
+        7, 8, 5, 1, 1, 2, 8, 10, 4, 2, 4, 5, 3, 6, 7, 3, 2, 7, 6, 1, 2, 9, 6, 1, 3, 4, 6, 3, 3, 3,
+        2, 4, 4,
+    ];
     blizstein_test(&d);
 }
