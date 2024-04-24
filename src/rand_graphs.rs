@@ -14,12 +14,6 @@ fn is_graphical(d_seq: &[usize]) -> bool {
     let mut d_sorted = d_seq.to_vec();
     d_sorted.sort_by(|a, b| b.cmp(a));
 
-    let mut partial_sums = vec![0; n];
-    partial_sums[0] = d_sorted[0];
-    for i in 1..n {
-        partial_sums[i] = partial_sums[i - 1] + d_sorted[i];
-    }
-
     // sum from i to n
     let mut upper_sums = vec![0; n + 1];
     for i in (0..n).rev() {
@@ -33,13 +27,13 @@ fn is_graphical(d_seq: &[usize]) -> bool {
     }
     let max_deg = d_sorted[0];
     let mut current_max = biggest_i[max_deg].unwrap();
-    for i in (0..=max_deg).rev() {
-        match biggest_i[i] {
+    for k in (0..=max_deg).rev() {
+        match biggest_i[k] {
             Some(j) => {
                 current_max = j;
             }
             None => {
-                biggest_i[i] = Some(current_max);
+                biggest_i[k] = Some(current_max);
             }
         }
     }
@@ -56,11 +50,13 @@ fn is_graphical(d_seq: &[usize]) -> bool {
     true
 }
 
-fn is_graphical_i_j(d_seq: &[usize], i: usize, j: usize) -> bool {
-    let mut d_seq = d_seq.to_vec();
+fn is_graphical_i_j(d_seq: &mut Vec<usize>, i: usize, j: usize) -> bool {
     d_seq[i] -= 1;
     d_seq[j] -= 1;
-    is_graphical(&d_seq)
+    let result = is_graphical(&d_seq);
+    d_seq[i] += 1;
+    d_seq[j] += 1;
+    result
 }
 
 fn get_rand_neighbour(ppb_sum: usize, graphical_candidates: &[&usize], d: &[usize]) -> usize {
@@ -102,7 +98,7 @@ pub fn bliztstein_generation(d_in: &[usize]) -> Result<Graph, &'static str> {
             let graphical_candidates = not_having_edge
                 .iter()
                 .filter(|&j| {
-                    if is_graphical_i_j(&d, i, *j) {
+                    if is_graphical_i_j(&mut d, i, *j) {
                         ppb_sum += d[*j];
                         return true;
                     }
