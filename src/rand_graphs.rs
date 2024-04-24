@@ -1,18 +1,21 @@
 use crate::graphs::Graph;
-use std::collections::HashSet;
 
 // Based on Erdős–Gallai theorem.
 fn is_graphical(d_seq: &[usize]) -> bool {
-    let sum = d_seq.iter().sum::<usize>();
-    let n = d_seq.len();
-
-    if sum % 2 != 0 {
+    if d_seq.iter().sum::<usize>() & 1 == 1 {
         return false;
     }
 
+    let n = d_seq.len();
     let mut left_sum = 0;
     let mut d_sorted = d_seq.to_vec();
     d_sorted.sort_by(|a, b| b.cmp(a));
+    let durfee_num = d_sorted
+        .iter()
+        .enumerate()
+        .filter(|&(i, &di)| i <= di)
+        .count();
+    let max_deg = d_sorted[0];
 
     // sum from i to n
     let mut upper_sums = vec![0; n + 1];
@@ -21,11 +24,11 @@ fn is_graphical(d_seq: &[usize]) -> bool {
     }
 
     // define biggest i such that d_sorted[i] >= k for each k
-    let mut biggest_i = vec![None; n + 2];
-    for i in 0..n {
-        biggest_i[d_sorted[i]] = Some(i);
+    let mut biggest_i = vec![None; max_deg + 1];
+    for (i, &di) in d_sorted.iter().enumerate() {
+        biggest_i[di] = Some(i);
     }
-    let max_deg = d_sorted[0];
+
     let mut current_max = biggest_i[max_deg].unwrap();
     for k in (0..=max_deg).rev() {
         match biggest_i[k] {
@@ -38,9 +41,9 @@ fn is_graphical(d_seq: &[usize]) -> bool {
         }
     }
 
-    for k in 0..n {
-        left_sum += d_sorted[k];
-        let p = biggest_i[k + 2].unwrap_or(k).max(k);
+    for (k, dk) in d_sorted.iter().enumerate().take(durfee_num) {
+        left_sum += dk;
+        let p = biggest_i.get(k + 2).unwrap_or(&Some(k)).unwrap_or(k).max(k);
 
         if left_sum > p * (k + 1) + upper_sums[p + 1] {
             return false;
@@ -50,10 +53,10 @@ fn is_graphical(d_seq: &[usize]) -> bool {
     true
 }
 
-fn is_graphical_i_j(d_seq: &mut Vec<usize>, i: usize, j: usize) -> bool {
+fn is_graphical_i_j(d_seq: &mut [usize], i: usize, j: usize) -> bool {
     d_seq[i] -= 1;
     d_seq[j] -= 1;
-    let result = is_graphical(&d_seq);
+    let result = is_graphical(d_seq);
     d_seq[i] += 1;
     d_seq[j] += 1;
     result
@@ -87,34 +90,43 @@ pub fn bliztstein_generation(d_in: &[usize]) -> Result<Graph, &'static str> {
         .iter()
         .enumerate()
         .filter_map(|(i, &di)| if di > 0 { Some(i) } else { None })
-        .collect::<HashSet<usize>>();
+        .collect::<Vec<usize>>();
+    indices_to_process.sort_by(|a, b| d[*b].cmp(&d[*a]));
 
-    while let Some(i) = indices_to_process.iter().next().copied() {
-        indices_to_process.remove(&i);
+    while let Some(i) = indices_to_process.pop() {
         let mut not_having_edge = indices_to_process.clone();
 
         while d[i] > 0 {
-            let mut ppb_sum = 0;
-            let graphical_candidates = not_having_edge
-                .iter()
-                .filter(|&j| {
-                    if is_graphical_i_j(&mut d, i, *j) {
-                        ppb_sum += d[*j];
-                        return true;
-                    }
-                    false
-                })
-                .collect::<Vec<&usize>>();
+            let mut j_opt = None;
+            let m = not_having_edge.len();
 
-            let j = get_rand_neighbour(ppb_sum, &graphical_candidates, &d);
+            // random choice without replacement
+            // reject if the edge is not graphical
+            for max_rand in (0..m).rev() {
+                let r = fastrand::usize(0..=max_rand);
+                not_having_edge.swap(r, max_rand);
+                let j = not_having_edge[max_rand];
+
+                if is_graphical_i_j(&mut d, i, j) {
+                    j_opt = Some(j);
+                    not_having_edge.swap(m - 1, max_rand);
+                    not_having_edge.pop();
+                    break;
+                }
+            }
+            
+            let j = j_opt.unwrap();
             graph.add_edge(i, j);
 
             d[i] -= 1;
             d[j] -= 1;
-            not_having_edge.remove(&j);
+
+            let itp_index = indices_to_process.iter().position(|x| *x == j).unwrap();
 
             if d[j] == 0 {
-                indices_to_process.remove(&j);
+                indices_to_process.remove(itp_index);
+            } else {
+                indices_to_process.select_nth_unstable_by(itp_index, |x, y| d[*y].cmp(&d[*x]));
             }
         }
     }
