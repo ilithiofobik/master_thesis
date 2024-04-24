@@ -11,6 +11,7 @@ fn k4_test() {
 fn tarjan_test() {
     let mut graph = Graph::empty(9);
     graph.add_edge(0, 1);
+    graph.add_edge(0, 4);
     graph.add_edge(0, 5);
     graph.add_edge(0, 6);
     graph.add_edge(1, 2);

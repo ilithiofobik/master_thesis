@@ -20,12 +20,35 @@ fn is_graphical(d_seq: &[usize]) -> bool {
         partial_sums[i] = partial_sums[i - 1] + d_sorted[i];
     }
 
+    // sum from i to n
+    let mut upper_sums = vec![0; n + 1];
+    for i in (0..n).rev() {
+        upper_sums[i] = upper_sums[i + 1] + d_sorted[i];
+    }
+
+    // define biggest i such that d_sorted[i] >= k for each k
+    let mut biggest_i = vec![None; n + 2];
+    for i in 0..n {
+        biggest_i[d_sorted[i]] = Some(i);
+    }
+    let max_deg = d_sorted[0];
+    let mut current_max = biggest_i[max_deg].unwrap();
+    for i in (0..=max_deg).rev() {
+        match biggest_i[i] {
+            Some(j) => {
+                current_max = j;
+            }
+            None => {
+                biggest_i[i] = Some(current_max);
+            }
+        }
+    }
+
     for k in 0..n {
         left_sum += d_sorted[k];
-        let bigger_count = (k + 1..n).take_while(|j| d_sorted[*j] > k + 1).count();
-        let smaller_sum = partial_sums[n - 1] - partial_sums[k + bigger_count];
+        let p = biggest_i[k + 2].unwrap_or(k).max(k);
 
-        if left_sum > (k + bigger_count) * (k + 1) + smaller_sum {
+        if left_sum > p * (k + 1) + upper_sums[p + 1] {
             return false;
         }
     }

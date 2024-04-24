@@ -77,14 +77,20 @@ impl Planarity<'_> {
         self.dfi[v] = Some(*counter);
         self.lowpoint[v] = *counter;
 
-        for w in self.graph.neighbours(v).unwrap() {
-            match self.dfi[*w] {
+        let mut sorted_neighbours_of_v = (*self.graph.neighbours(v).unwrap())
+            .iter()
+            .cloned()
+            .collect::<Vec<usize>>();
+        sorted_neighbours_of_v.sort();
+
+        for w in sorted_neighbours_of_v {
+            match self.dfi[w] {
                 None => {
-                    self.biconnect(*w, v, counter, edge_stack);
-                    self.lowpoint[v] = std::cmp::min(self.lowpoint[v], self.lowpoint[*w]);
+                    self.biconnect(w, v, counter, edge_stack);
+                    self.lowpoint[v] = std::cmp::min(self.lowpoint[v], self.lowpoint[w]);
                 }
                 Some(dfi_w) => {
-                    if dfi_w < self.dfi[v].unwrap() && *w != u {
+                    if dfi_w < self.dfi[v].unwrap() && w != u {
                         self.lowpoint[v] = std::cmp::min(self.lowpoint[v], dfi_w);
                     }
                 }
