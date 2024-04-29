@@ -1,10 +1,5 @@
 use crate::graphs::Graph;
-use std::collections::HashMap;
 use std::collections::HashSet;
-use std::collections::VecDeque;
-use std::rc::Rc;
-use std::sync::RwLock;
-use std::vec;
 
 fn sort_3tuple<T>(a: T, b: T, c: T) -> (T, T, T)
 where
@@ -34,7 +29,7 @@ pub fn list_triangles(g: &Graph) -> Vec<(usize, usize, usize)> {
     let mut processed = vec![false; n];
 
     let mut sorted_vertices = g.vertices().collect::<Vec<usize>>();
-    sorted_vertices.sort_by(|a, b| g.degree(*b).cmp(&g.degree(*a)));
+    sorted_vertices.sort_by_key(|b| std::cmp::Reverse(g.degree(*b)));
 
     while let Some(v) = sorted_vertices.pop() {
         let v_neighbours = g.neighbours(v).unwrap();
