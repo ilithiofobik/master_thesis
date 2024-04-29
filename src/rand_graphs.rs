@@ -114,7 +114,7 @@ pub fn bliztstein_generation(d_in: &[usize]) -> Result<Graph, &'static str> {
                     break;
                 }
             }
-            
+
             let j = j_opt.unwrap();
             graph.add_edge(i, j);
 

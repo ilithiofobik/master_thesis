@@ -16,7 +16,7 @@ fn blizstein_test(d: &[usize]) {
 
 #[test]
 fn bliztstein_generation_regular_test() {
-    let d = vec![10; 100];
+    let d = vec![10; 1000];
     blizstein_test(&d);
 }
 

@@ -117,6 +117,15 @@ impl Graph {
         }
     }
 
+    /// Unsafe degree function - returns 0 for non-existing vertices
+    pub fn degree(&self, vertex: usize) -> usize {
+        if self.is_valid_vertex(vertex) {
+            self.neighbours[vertex].len()
+        } else {
+            0
+        }
+    }
+
     pub fn print_edges(&self) {
         println!("Edges:");
         for (from, tos) in self.neighbours.iter().enumerate() {

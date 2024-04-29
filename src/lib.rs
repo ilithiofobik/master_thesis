@@ -13,6 +13,11 @@ pub mod planarity;
 /// This module contains functions for generating random graphs.
 pub mod rand_graphs;
 
+/// # Cacti
+///
+/// This module contains approximation algorithm for MPS problem using cacti algorithms.
+pub mod cacti;
+
 /// # Tests
 ///
 /// This module contains tests for the library.
