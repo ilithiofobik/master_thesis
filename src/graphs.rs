@@ -5,7 +5,7 @@ use std::ops::Range;
 pub struct Graph {
     num_of_vertices: usize,
     num_of_edges: usize,
-    neighbours: Vec<HashSet<usize>>,
+    neighbors: Vec<HashSet<usize>>,
 }
 
 impl Default for Graph {
@@ -19,20 +19,20 @@ impl Graph {
         Graph {
             num_of_vertices: 0,
             num_of_edges: 0,
-            neighbours: Vec::new(),
+            neighbors: Vec::new(),
         }
     }
 
     pub fn empty(num_of_vertices: usize) -> Self {
-        let mut neighbours = Vec::new();
+        let mut neighbors = Vec::new();
         for _ in 0..num_of_vertices {
-            neighbours.push(HashSet::new());
+            neighbors.push(HashSet::new());
         }
 
         Graph {
             num_of_vertices,
             num_of_edges: 0,
-            neighbours,
+            neighbors,
         }
     }
 
@@ -65,7 +65,7 @@ impl Graph {
         Graph {
             num_of_vertices,
             num_of_edges: num_of_vertices * (num_of_vertices - 1) / 2,
-            neighbours,
+            neighbors: neighbours,
         }
     }
 
@@ -74,7 +74,7 @@ impl Graph {
     }
 
     pub fn has_edge(&self, from: usize, to: usize) -> bool {
-        self.neighbours[from].contains(&to)
+        self.neighbors[from].contains(&to)
     }
 
     pub fn add_edge(&mut self, from: usize, to: usize) -> bool {
@@ -85,13 +85,13 @@ impl Graph {
         }
 
         // no self loops nor multi-edges
-        if from == to || self.neighbours[from].contains(&to) {
+        if from == to || self.neighbors[from].contains(&to) {
             println!("Self loop or multi-edge: {} -> {}", from, to);
             return false;
         }
 
-        self.neighbours[from].insert(to);
-        self.neighbours[to].insert(from);
+        self.neighbors[from].insert(to);
+        self.neighbors[to].insert(from);
         self.num_of_edges += 1;
 
         true
@@ -109,9 +109,9 @@ impl Graph {
         self.num_of_edges
     }
 
-    pub fn neighbours(&self, vertex: usize) -> Option<&HashSet<usize>> {
+    pub fn neighbors(&self, vertex: usize) -> Option<&HashSet<usize>> {
         if self.is_valid_vertex(vertex) {
-            Some(&self.neighbours[vertex])
+            Some(&self.neighbors[vertex])
         } else {
             None
         }
@@ -120,7 +120,7 @@ impl Graph {
     /// Unsafe degree function - returns 0 for non-existing vertices
     pub fn degree(&self, vertex: usize) -> usize {
         if self.is_valid_vertex(vertex) {
-            self.neighbours[vertex].len()
+            self.neighbors[vertex].len()
         } else {
             0
         }
@@ -128,7 +128,7 @@ impl Graph {
 
     pub fn print_edges(&self) {
         println!("Edges:");
-        for (from, tos) in self.neighbours.iter().enumerate() {
+        for (from, tos) in self.neighbors.iter().enumerate() {
             for to in tos {
                 println!("{} -> {}", from, to);
             }

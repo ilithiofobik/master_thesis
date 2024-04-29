@@ -77,7 +77,7 @@ impl Planarity<'_> {
         self.dfi[v] = Some(*counter);
         self.lowpoint[v] = *counter;
 
-        let mut sorted_neighbours_of_v = (*self.graph.neighbours(v).unwrap())
+        let mut sorted_neighbours_of_v = (*self.graph.neighbors(v).unwrap())
             .iter()
             .cloned()
             .collect::<Vec<usize>>();

@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 fastrand = "2.0.2"
+nalgebra = "0.32.5"
