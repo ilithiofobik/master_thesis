@@ -1,6 +1,6 @@
 use crate::graphs::Graph;
 
-// Based on Erdős–Gallai theorem.
+// Based on Erdos–Gallai theorem.
 fn is_graphical(d_seq: &[usize]) -> bool {
     if d_seq.iter().sum::<usize>() & 1 == 1 {
         return false;

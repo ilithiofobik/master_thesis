@@ -53,19 +53,19 @@ impl Graph {
     }
 
     pub fn complete(num_of_vertices: usize) -> Self {
-        let mut neighbours = Vec::with_capacity(num_of_vertices);
+        let mut neighbors = Vec::with_capacity(num_of_vertices);
         for i in 0..num_of_vertices {
             let set = (0..num_of_vertices)
                 .filter(|&j| i != j)
                 .collect::<HashSet<usize>>();
 
-            neighbours.push(set);
+            neighbors.push(set);
         }
 
         Graph {
             num_of_vertices,
             num_of_edges: num_of_vertices * (num_of_vertices - 1) / 2,
-            neighbors: neighbours,
+            neighbors: neighbors,
         }
     }
 
@@ -93,6 +93,26 @@ impl Graph {
         self.neighbors[from].insert(to);
         self.neighbors[to].insert(from);
         self.num_of_edges += 1;
+
+        true
+    }
+
+    pub fn remove_edge(&mut self, from: usize, to: usize) -> bool {
+        // both vertices must be valid
+        if !self.is_valid_vertex(from) || !self.is_valid_vertex(to) {
+            println!("Invalid vertices: {} -> {}", from, to);
+            return false;
+        }
+
+        // must exist
+        if !self.neighbors[from].contains(&to) {
+            println!("Edge does not exist: {} -> {}", from, to);
+            return false;
+        }
+
+        self.neighbors[from].remove(&to);
+        self.neighbors[to].remove(&from);
+        self.num_of_edges -= 1;
 
         true
     }

@@ -1,7 +1,10 @@
 use crate::graphs::Graph;
-use nalgebra::ComplexField;
-use nalgebra::DMatrix;
+use fastrand;
+use ndarray::Array2;
+use std::collections::HashMap;
 use std::collections::HashSet;
+
+type M = Array2<f32>;
 
 fn sort_3tuple<T>(a: T, b: T, c: T) -> (T, T, T)
 where
@@ -70,6 +73,16 @@ fn triangles_to_cactus(n: usize, triangles: &[(usize, usize, usize)]) -> Graph {
     cactus
 }
 
+fn slices_concat3(p: &[usize], r: &[usize], c: &[usize]) -> Vec<usize> {
+    let mut result = Vec::with_capacity(p.len() + r.len() + c.len());
+    result.extend_from_slice(p);
+    result.extend_from_slice(r);
+    result.extend_from_slice(c);
+    result.sort();
+    result.dedup();
+    result
+}
+
 fn graphic_remove(
     p: &mut [usize],
     r: &mut [usize],
@@ -84,6 +97,7 @@ fn graphic_remove(
     if p_len == 1 && r_len == 1 && c_len == 1 {
         // process the triangle if it is in the list
     } else {
+        let _s = slices_concat3(p, r, c);
         let p_half = p_len / 2;
         let r_half = r_len / 2;
         let c_half = c_len / 2;
@@ -125,15 +139,38 @@ fn graphic_remove(
     }
 }
 
+fn triangles_to_indeterminates(
+    triangles: &[(usize, usize, usize)],
+) -> HashMap<(usize, usize, usize), f32> {
+    let mut indeterminates = HashMap::new();
+    for triangle in triangles {
+        indeterminates.insert(*triangle, fastrand::f32() + 0.1);
+    }
+    indeterminates
+}
+
+fn calc_y(indeterminates: &HashMap<(usize, usize, usize), f32>, n: usize) -> M {
+    let mut y = M::zeros((n, n));
+    for (i, triangle) in indeterminates.keys().enumerate() {
+        let (a, b, c) = triangle;
+        y[[i, *a]] = indeterminates[triangle];
+        y[[i, *b]] = indeterminates[triangle];
+        y[[i, *c]] = indeterminates[triangle];
+    }
+    y
+}
+
 pub fn cacti_approximation(g: &Graph) -> Graph {
     let n = g.num_of_vertices();
     let mut triangles = list_triangles(g);
+    let indeterminates = triangles_to_indeterminates(&triangles);
 
     let mut p = g.vertices().collect::<Vec<usize>>();
     let mut r = p.clone();
     let mut c = p.clone();
 
     // TODO: construct Y and N
+    let mut _y = calc_y(&indeterminates, n);
 
     graphic_remove(&mut p, &mut r, &mut c, g, &mut triangles);
 
