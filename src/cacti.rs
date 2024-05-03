@@ -65,10 +65,10 @@ pub fn list_triangles(g: &Graph) -> Vec<(usize, usize, usize)> {
 
 fn triangles_to_cactus(n: usize, triangles: &[(usize, usize, usize)]) -> Graph {
     let mut cactus = Graph::empty(n);
-    for triangle in triangles {
-        cactus.add_edge(triangle.0, triangle.1);
-        cactus.add_edge(triangle.1, triangle.2);
-        cactus.add_edge(triangle.2, triangle.0);
+    for &(a, b, c) in triangles {
+        cactus.add_edge(a, b);
+        cactus.add_edge(b, c);
+        cactus.add_edge(c, a);
     }
     cactus
 }
@@ -84,18 +84,21 @@ fn slices_concat3(p: &[usize], r: &[usize], c: &[usize]) -> Vec<usize> {
 }
 
 fn graphic_remove(
+    y: &mut M,
     p: &mut [usize],
     r: &mut [usize],
     c: &mut [usize],
     g: &Graph,
     triangles: &mut Vec<(usize, usize, usize)>,
-) {
+) -> bool {
     let p_len = p.len();
     let r_len = r.len();
     let c_len = c.len();
+    let mut removed = false;
 
     if p_len == 1 && r_len == 1 && c_len == 1 {
         // process the triangle if it is in the list
+        // if changed then removed = true
     } else {
         let _s = slices_concat3(p, r, c);
         let p_half = p_len / 2;
@@ -117,26 +120,23 @@ fn graphic_remove(
                     if c_s >= c_t {
                         continue;
                     }
-                    graphic_remove(
+                    let slice_removed = graphic_remove(
+                        y,
                         &mut p[p_s..p_t],
                         &mut r[r_s..r_t],
                         &mut c[c_s..c_t],
                         g,
                         triangles,
                     );
-                    // TODO: compute N_S,S
+                    removed = removed || slice_removed;
+                    if slice_removed {
+                        // TODO: compute N_S,S
+                    }
                 }
             }
         }
-
-        graphic_remove(
-            &mut p[..p_half],
-            &mut r[..r_half],
-            &mut c[..c_half],
-            g,
-            triangles,
-        );
     }
+    removed
 }
 
 fn triangles_to_indeterminates(
@@ -144,18 +144,25 @@ fn triangles_to_indeterminates(
 ) -> HashMap<(usize, usize, usize), f32> {
     let mut indeterminates = HashMap::new();
     for triangle in triangles {
-        indeterminates.insert(*triangle, fastrand::f32() + 0.1);
+        indeterminates.insert(*triangle, 0.75 * fastrand::f32() + 0.25); // values between 0.25 and 1
     }
     indeterminates
 }
 
+fn add_triangle_to_y(y: &mut M, triangle: (usize, usize, usize), x: f32) {
+    let (i, j, k) = triangle;
+    y[[i, j]] += x;
+    y[[i, k]] -= x;
+    y[[j, i]] -= x;
+    y[[j, k]] += x;
+    y[[k, i]] += x;
+    y[[k, j]] -= x;
+}
+
 fn calc_y(indeterminates: &HashMap<(usize, usize, usize), f32>, n: usize) -> M {
     let mut y = M::zeros((n, n));
-    for (i, triangle) in indeterminates.keys().enumerate() {
-        let (a, b, c) = triangle;
-        y[[i, *a]] = indeterminates[triangle];
-        y[[i, *b]] = indeterminates[triangle];
-        y[[i, *c]] = indeterminates[triangle];
+    for (&triangle, x) in indeterminates {
+        add_triangle_to_y(&mut y, triangle, *x);
     }
     y
 }
@@ -170,9 +177,10 @@ pub fn cacti_approximation(g: &Graph) -> Graph {
     let mut c = p.clone();
 
     // TODO: construct Y and N
-    let mut _y = calc_y(&indeterminates, n);
+    let mut y = calc_y(&indeterminates, n);
+    //let mut n_mat = y.
 
-    graphic_remove(&mut p, &mut r, &mut c, g, &mut triangles);
+    graphic_remove(&mut y, &mut p, &mut r, &mut c, g, &mut triangles);
 
     // construct cactus with the remaining edges
     triangles_to_cactus(n, &triangles)
