@@ -3,7 +3,8 @@ extern crate ndarray_linalg;
 
 use crate::graphs::Graph;
 use fastrand;
-use ndarray::{Array2, ArrayBase, Ix2};
+use itertools::*;
+use ndarray::Array2;
 use ndarray_linalg::solve::Inverse;
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -31,9 +32,9 @@ where
     }
 }
 
-pub fn list_triangles(g: &Graph) -> Vec<(usize, usize, usize)> {
+pub fn list_triangles(g: &Graph) -> HashSet<(usize, usize, usize)> {
     let n = g.num_of_vertices();
-    let mut triangles = Vec::new();
+    let mut triangles = HashSet::new();
     let mut marked = HashSet::new();
     let mut processed = vec![false; n];
 
@@ -56,7 +57,7 @@ pub fn list_triangles(g: &Graph) -> Vec<(usize, usize, usize)> {
             for w in u_neighbors {
                 if marked.contains(w) {
                     let triangle = sort_3tuple(v, *u, *w);
-                    triangles.push(triangle);
+                    triangles.insert(triangle);
                 }
             }
         }
@@ -67,7 +68,7 @@ pub fn list_triangles(g: &Graph) -> Vec<(usize, usize, usize)> {
     triangles
 }
 
-fn triangles_to_cactus(n: usize, triangles: &[(usize, usize, usize)]) -> Graph {
+fn triangles_to_cactus(n: usize, triangles: &HashSet<(usize, usize, usize)>) -> Graph {
     let mut cactus = Graph::empty(n);
     for &(a, b, c) in triangles {
         cactus.add_edge(a, b);
@@ -77,7 +78,7 @@ fn triangles_to_cactus(n: usize, triangles: &[(usize, usize, usize)]) -> Graph {
     cactus
 }
 
-fn slices_concat3(p: &[usize], r: &[usize], c: &[usize]) -> Vec<usize> {
+fn _slices_concat3(p: &[usize], r: &[usize], c: &[usize]) -> Vec<usize> {
     let mut result = Vec::with_capacity(p.len() + r.len() + c.len());
     result.extend_from_slice(p);
     result.extend_from_slice(r);
@@ -87,70 +88,14 @@ fn slices_concat3(p: &[usize], r: &[usize], c: &[usize]) -> Vec<usize> {
     result
 }
 
-fn graphic_remove(
-    y_mat: &mut M,
-    n_mat: &mut M,
-    p: &mut [usize],
-    r: &mut [usize],
-    c: &mut [usize],
-    g: &Graph,
-    triangles: &mut Vec<(usize, usize, usize)>,
-) -> bool {
-    let p_len = p.len();
-    let r_len = r.len();
-    let c_len = c.len();
-    let mut removed = false;
-
-    if p_len == 1 && r_len == 1 && c_len == 1 {
-        // process the triangle if it is in the list
-        // if changed then removed = true
-    } else {
-        let _s = slices_concat3(p, r, c);
-        let p_half = p_len / 2;
-        let r_half = r_len / 2;
-        let c_half = c_len / 2;
-
-        for (p_s, p_t) in [(0, p_half), (p_half, p_len)] {
-            // p slice is empty
-            if p_s >= p_t {
-                continue;
-            }
-            for (r_s, r_t) in [(0, r_half), (r_half, r_len)] {
-                // r slice is empty
-                if r_s >= r_t {
-                    continue;
-                }
-                for (c_s, c_t) in [(0, c_half), (c_half, c_len)] {
-                    // c slice is empty
-                    if c_s >= c_t {
-                        continue;
-                    }
-                    let slice_removed = graphic_remove(
-                        y_mat,
-                        n_mat,
-                        &mut p[p_s..p_t],
-                        &mut r[r_s..r_t],
-                        &mut c[c_s..c_t],
-                        g,
-                        triangles,
-                    );
-                    removed = removed || slice_removed;
-                    if slice_removed {
-                        // TODO: compute N_S,S
-                    }
-                }
-            }
-        }
-    }
-    removed
-}
+fn _recalc_on_s(y_mat: &mut M, n_mat: &mut M, s: &[usize]) {}
 
 fn triangles_to_indeterminates(
-    triangles: &[(usize, usize, usize)],
+    triangles: &HashSet<(usize, usize, usize)>,
 ) -> HashMap<(usize, usize, usize), f32> {
     let mut indeterminates = HashMap::new();
     for triangle in triangles {
-        indeterminates.insert(*triangle, 0.75 * fastrand::f32() + 0.25); // values between 0.25 and 1
+        indeterminates.insert(*triangle, 7.75 * fastrand::f32() + 0.25); // values between 0.25 and 1
     }
     indeterminates
 }
@@ -173,28 +118,78 @@ fn calc_y(indeterminates: &HashMap<(usize, usize, usize), f32>, n: usize) -> M {
     y
 }
 
+struct TriangleRemover<'a> {
+    y_mat: &'a mut M,
+    n_mat: &'a mut M,
+    triangles: &'a mut HashSet<(usize, usize, usize)>,
+    indeterminates: &'a HashMap<(usize, usize, usize), f32>,
+}
+
+impl<'a> TriangleRemover<'a> {
+    fn len_halving(&self, len: usize) -> Vec<(usize, usize)> {
+        match len {
+            0 => vec![],
+            1 => vec![(0, 1)],
+            n => vec![(0, n / 2), (n / 2, n)],
+        }
+    }
+
+    fn graphic_remove(
+        &mut self,
+        (p_s, p_t): (usize, usize),
+        (r_s, r_t): (usize, usize),
+        (c_s, c_t): (usize, usize),
+    ) -> bool {
+        let p_len = p_t - p_s;
+        let r_len = r_t - r_s;
+        let c_len = c_t - c_s;
+        let mut removed = false;
+
+        if p_len == 1 && r_len == 1 && c_len == 1 {
+            let triangle = (p_s, r_s, c_s);
+
+            if let Some(x) = self.indeterminates.get(&triangle) {
+                add_triangle_to_y(self.y_mat, triangle, -x);
+                if let Ok(new_n) = self.y_mat.inv() {
+                    *self.n_mat = new_n;
+                    self.triangles.remove(&triangle);
+                } else {
+                    add_triangle_to_y(self.y_mat, triangle, *x);
+                }
+            }
+        } else {
+            let all_nodes = iproduct!(
+                self.len_halving(p_len),
+                self.len_halving(r_len),
+                self.len_halving(c_len)
+            );
+            for (p, r, c) in all_nodes {
+                let slice_removed = self.graphic_remove(p, r, c);
+                removed = removed || slice_removed;
+                if slice_removed {
+                    *self.n_mat = self.y_mat.inv().unwrap();
+                }
+            }
+        }
+        removed
+    }
+}
+
 pub fn cacti_approximation(g: &Graph) -> Graph {
     let n = g.num_of_vertices();
     let mut triangles = list_triangles(g);
     let indeterminates = triangles_to_indeterminates(&triangles);
-
-    let mut p = g.vertices().collect::<Vec<usize>>();
-    let mut r = p.clone();
-    let mut c = p.clone();
-
     let mut y_mat = calc_y(&indeterminates, n);
-    let n_mat = Inverse::inv(&y_mat);
 
-    if let Ok(mut n_mat) = n_mat {
-        graphic_remove(
-            &mut y_mat,
-            &mut n_mat,
-            &mut p,
-            &mut r,
-            &mut c,
-            g,
-            &mut triangles,
-        );
+    if let Ok(mut n_mat) = y_mat.inv() {
+        let mut tr = TriangleRemover {
+            y_mat: &mut y_mat,
+            n_mat: &mut n_mat,
+            triangles: &mut triangles,
+            indeterminates: &indeterminates,
+        };
+
+        tr.graphic_remove((0, n), (0, n), (0, n));
     }
 
     // construct cactus with the remaining edges
