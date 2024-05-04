@@ -1,6 +1,10 @@
+extern crate ndarray;
+extern crate ndarray_linalg;
+
 use crate::graphs::Graph;
 use fastrand;
-use ndarray::Array2;
+use ndarray::{Array2, ArrayBase, Ix2};
+use ndarray_linalg::solve::Inverse;
 use std::collections::HashMap;
 use std::collections::HashSet;
 
@@ -84,7 +88,8 @@ fn slices_concat3(p: &[usize], r: &[usize], c: &[usize]) -> Vec<usize> {
 }
 
 fn graphic_remove(
-    y: &mut M,
+    y_mat: &mut M,
+    n_mat: &mut M,
     p: &mut [usize],
     r: &mut [usize],
     c: &mut [usize],
@@ -121,7 +126,8 @@ fn graphic_remove(
                         continue;
                     }
                     let slice_removed = graphic_remove(
-                        y,
+                        y_mat,
+                        n_mat,
                         &mut p[p_s..p_t],
                         &mut r[r_s..r_t],
                         &mut c[c_s..c_t],
@@ -176,11 +182,20 @@ pub fn cacti_approximation(g: &Graph) -> Graph {
     let mut r = p.clone();
     let mut c = p.clone();
 
-    // TODO: construct Y and N
-    let mut y = calc_y(&indeterminates, n);
-    //let mut n_mat = y.
+    let mut y_mat = calc_y(&indeterminates, n);
+    let n_mat = Inverse::inv(&y_mat);
 
-    graphic_remove(&mut y, &mut p, &mut r, &mut c, g, &mut triangles);
+    if let Ok(mut n_mat) = n_mat {
+        graphic_remove(
+            &mut y_mat,
+            &mut n_mat,
+            &mut p,
+            &mut r,
+            &mut c,
+            g,
+            &mut triangles,
+        );
+    }
 
     // construct cactus with the remaining edges
     triangles_to_cactus(n, &triangles)
