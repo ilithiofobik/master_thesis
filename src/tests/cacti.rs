@@ -50,6 +50,7 @@ fn cacti_approximation_k1_test() {
 fn cacti_approximation_k6_test() {
     let graph = Graph::complete(6);
     let cacti = cacti_approximation(&graph);
+    cacti.print_edges();
 
     assert_eq!(cacti.num_of_vertices(), 6);
     assert_eq!(cacti.num_of_edges(), 15);

@@ -5,11 +5,16 @@ use crate::graphs::Graph;
 use fastrand;
 use itertools::*;
 use ndarray::Array2;
+use ndarray_linalg::solve::Determinant;
 use ndarray_linalg::solve::Inverse;
 use std::collections::HashMap;
 use std::collections::HashSet;
 
 type M = Array2<f32>;
+
+/*
+    In this module we suppose that the triangle (i, j, k) represents a pair of two edges: (i, j) and (i, k).
+*/
 
 fn sort_3tuple<T>(a: T, b: T, c: T) -> (T, T, T)
 where
@@ -66,6 +71,22 @@ pub fn list_triangles(g: &Graph) -> HashSet<(usize, usize, usize)> {
     }
 
     triangles
+}
+
+pub fn purify_triangles(
+    triangles: &HashSet<(usize, usize, usize)>,
+) -> HashSet<(usize, usize, usize)> {
+    let mut used_edges = HashSet::new();
+    let mut purified = HashSet::new();
+    for &(a, b, c) in triangles {
+        if used_edges.contains(&(a, b)) || used_edges.contains(&(a, c)) {
+            continue;
+        }
+        used_edges.insert((a, b));
+        used_edges.insert((a, c));
+        purified.insert((a, b, c));
+    }
+    purified
 }
 
 fn triangles_to_cactus(n: usize, triangles: &HashSet<(usize, usize, usize)>) -> Graph {
@@ -151,15 +172,15 @@ impl<'a> TriangleRemover<'a> {
 
         if p_len == 1 && r_len == 1 && c_len == 1 {
             let triangle = (p_s, r_s, c_s);
-            println!("Removing triangle {} {} {}", p_s, r_s, c_s);
 
-            if let Some(x) = self.indeterminates.get(&triangle) {
+            if let Some(&x) = self.indeterminates.get(&triangle) {
                 add_triangle_to_y(self.y_mat, triangle, -x);
-                if let Ok(new_n) = self.y_mat.inv() {
-                    *self.n_mat = new_n;
+                let det = self.y_mat.det().unwrap();
+                if det != 0.0 {
+                    *self.n_mat = self.y_mat.inv().unwrap();
                     self.triangles.remove(&triangle);
                 } else {
-                    add_triangle_to_y(self.y_mat, triangle, *x);
+                    add_triangle_to_y(self.y_mat, triangle, x);
                 }
             }
         } else {
@@ -185,6 +206,9 @@ fn augment_cactus(_full: &Graph, _cactus: &mut Graph) {}
 pub fn cacti_approximation(g: &Graph) -> Graph {
     let n = g.num_of_vertices();
     let mut triangles = list_triangles(g);
+    println!("Triangles: {:?}", triangles);
+    triangles = purify_triangles(&triangles);
+    println!("Purified triangles: {:?}", triangles);
     let indeterminates = triangles_to_indeterminates(&triangles);
     let mut y_mat = calc_y(&indeterminates, n);
 

@@ -149,8 +149,8 @@ impl Graph {
     pub fn print_edges(&self) {
         println!("Edges:");
         for (from, tos) in self.neighbors.iter().enumerate() {
-            for to in tos {
-                println!("{} -> {}", from, to);
+            for to in tos.iter().filter(|&to| from < *to) {
+                println!("{} <-> {}", from, to);
             }
         }
     }
