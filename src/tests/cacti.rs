@@ -29,6 +29,24 @@ fn list_triangles_empty_test() {
 }
 
 #[test]
+fn cacti_approximation_empty_test() {
+    let graph = Graph::empty(0);
+    let cacti = cacti_approximation(&graph);
+
+    assert_eq!(cacti.num_of_vertices(), 0);
+    assert_eq!(cacti.num_of_edges(), 0);
+}
+
+#[test]
+fn cacti_approximation_k1_test() {
+    let graph = Graph::complete(1);
+    let cacti = cacti_approximation(&graph);
+
+    assert_eq!(cacti.num_of_vertices(), 1);
+    assert_eq!(cacti.num_of_edges(), 0);
+}
+
+#[test]
 fn cacti_approximation_k6_test() {
     let graph = Graph::complete(6);
     let cacti = cacti_approximation(&graph);

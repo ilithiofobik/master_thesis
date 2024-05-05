@@ -88,14 +88,15 @@ fn _slices_concat3(p: &[usize], r: &[usize], c: &[usize]) -> Vec<usize> {
     result
 }
 
-fn _recalc_on_s(y_mat: &mut M, n_mat: &mut M, s: &[usize]) {}
+// fn _recalc_on_s(y_mat: &mut M, n_mat: &mut M, s: &[usize]) {}
 
 fn triangles_to_indeterminates(
     triangles: &HashSet<(usize, usize, usize)>,
 ) -> HashMap<(usize, usize, usize), f32> {
     let mut indeterminates = HashMap::new();
     for triangle in triangles {
-        indeterminates.insert(*triangle, 7.75 * fastrand::f32() + 0.25); // values between 0.25 and 1
+        let r = fastrand::u16(1..) as f32; // values between 1 and 2^16-1
+        indeterminates.insert(*triangle, r);
     }
     indeterminates
 }
@@ -126,11 +127,14 @@ struct TriangleRemover<'a> {
 }
 
 impl<'a> TriangleRemover<'a> {
-    fn len_halving(&self, len: usize) -> Vec<(usize, usize)> {
-        match len {
+    fn range_halving(&self, first: usize, last: usize) -> Vec<(usize, usize)> {
+        match last - first {
             0 => vec![],
-            1 => vec![(0, 1)],
-            n => vec![(0, n / 2), (n / 2, n)],
+            1 => vec![(first, last)],
+            n => {
+                let mid = n / 2 + first;
+                vec![(first, mid), (mid, last)]
+            }
         }
     }
 
@@ -147,6 +151,7 @@ impl<'a> TriangleRemover<'a> {
 
         if p_len == 1 && r_len == 1 && c_len == 1 {
             let triangle = (p_s, r_s, c_s);
+            println!("Removing triangle {} {} {}", p_s, r_s, c_s);
 
             if let Some(x) = self.indeterminates.get(&triangle) {
                 add_triangle_to_y(self.y_mat, triangle, -x);
@@ -159,9 +164,9 @@ impl<'a> TriangleRemover<'a> {
             }
         } else {
             let all_nodes = iproduct!(
-                self.len_halving(p_len),
-                self.len_halving(r_len),
-                self.len_halving(c_len)
+                self.range_halving(p_s, p_t),
+                self.range_halving(r_s, r_t),
+                self.range_halving(c_s, c_t)
             );
             for (p, r, c) in all_nodes {
                 let slice_removed = self.graphic_remove(p, r, c);
@@ -174,6 +179,8 @@ impl<'a> TriangleRemover<'a> {
         removed
     }
 }
+
+fn augment_cactus(_full: &Graph, _cactus: &mut Graph) {}
 
 pub fn cacti_approximation(g: &Graph) -> Graph {
     let n = g.num_of_vertices();
@@ -193,5 +200,7 @@ pub fn cacti_approximation(g: &Graph) -> Graph {
     }
 
     // construct cactus with the remaining edges
-    triangles_to_cactus(n, &triangles)
+    let mut maximum_cactus = triangles_to_cactus(n, &triangles);
+    augment_cactus(g, &mut maximum_cactus);
+    maximum_cactus
 }
