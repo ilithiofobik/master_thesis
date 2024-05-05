@@ -1,3 +1,4 @@
+use core::num;
 use fastrand;
 use std::collections::HashSet;
 use std::ops::Range;
@@ -53,6 +54,10 @@ impl Graph {
     }
 
     pub fn complete(num_of_vertices: usize) -> Self {
+        if num_of_vertices == 0 {
+            return Graph::empty(0);
+        }
+
         let mut neighbors = Vec::with_capacity(num_of_vertices);
         for i in 0..num_of_vertices {
             let set = (0..num_of_vertices)

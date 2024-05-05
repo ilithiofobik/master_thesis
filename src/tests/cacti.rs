@@ -2,6 +2,18 @@ use crate::cacti::cacti_approximation;
 use crate::cacti::list_triangles;
 use crate::graphs::Graph;
 
+fn binomial(n: usize, k: usize) -> usize {
+    if k > n {
+        return 0;
+    }
+
+    if k == 0 {
+        return 1;
+    }
+
+    (n * binomial(n - 1, k - 1)) / k
+}
+
 #[test]
 fn list_triangles_test() {
     let mut graph = Graph::complete(5);
@@ -21,43 +33,26 @@ fn list_triangles_test() {
 }
 
 #[test]
-fn list_triangles_empty_test() {
-    let graph = Graph::new();
-    let triangles = list_triangles(&graph);
+fn list_triangles_complete_test() {
+    for n in 0..10 {
+        println!("list_triangles_complete_test n = {}", n);
 
-    assert_eq!(triangles.len(), 0);
+        let graph = Graph::complete(n);
+        let triangles = list_triangles(&graph);
+
+        assert_eq!(triangles.len(), binomial(n, 3));
+    }
 }
 
 #[test]
-fn cacti_approximation_empty_test() {
-    let graph = Graph::empty(0);
-    let cacti = cacti_approximation(&graph);
+fn cacti_approximation_complete_test() {
+    for n in 0..10 {
+        println!("cacti_approximation_complete_test n = {}", n);
 
-    assert_eq!(cacti.num_of_vertices(), 0);
-    assert_eq!(cacti.num_of_edges(), 0);
-}
+        let graph = Graph::complete(n);
+        let cacti = cacti_approximation(&graph);
 
-#[test]
-fn cacti_approximation_k1_test() {
-    let graph = Graph::complete(1);
-    let cacti = cacti_approximation(&graph);
-
-    assert_eq!(cacti.num_of_vertices(), 1);
-    assert_eq!(cacti.num_of_edges(), 0);
-}
-
-#[test]
-fn cacti_approximation_k6_test() {
-    let graph = Graph::complete(6);
-    let cacti = cacti_approximation(&graph);
-    cacti.print_edges();
-
-    assert_eq!(cacti.num_of_vertices(), 6);
-    assert_eq!(cacti.num_of_edges(), 15);
-    assert_eq!(cacti.neighbors(0), None);
-    assert_eq!(cacti.neighbors(1), None);
-    assert_eq!(cacti.neighbors(2), None);
-    assert_eq!(cacti.neighbors(3), None);
-    assert_eq!(cacti.neighbors(4), None);
-    assert_eq!(cacti.neighbors(5), None);
+        assert_eq!(cacti.num_of_vertices(), n);
+        assert_eq!(cacti.num_of_edges(), 3 * (n / 3));
+    }
 }

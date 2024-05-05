@@ -7,6 +7,7 @@ use itertools::*;
 use ndarray::Array2;
 use ndarray_linalg::solve::Determinant;
 use ndarray_linalg::solve::Inverse;
+use ndarray_linalg::Scalar;
 use std::collections::HashMap;
 use std::collections::HashSet;
 
@@ -79,11 +80,15 @@ pub fn purify_triangles(
     let mut used_edges = HashSet::new();
     let mut purified = HashSet::new();
     for &(a, b, c) in triangles {
-        if used_edges.contains(&(a, b)) || used_edges.contains(&(a, c)) {
+        if used_edges.contains(&(a, b))
+            || used_edges.contains(&(a, c))
+            || used_edges.contains(&(b, c))
+        {
             continue;
         }
         used_edges.insert((a, b));
         used_edges.insert((a, c));
+        used_edges.insert((b, c));
         purified.insert((a, b, c));
     }
     purified
@@ -140,14 +145,18 @@ fn calc_y(indeterminates: &HashMap<(usize, usize, usize), f32>, n: usize) -> M {
     y
 }
 
-struct TriangleRemover<'a> {
+trait CactusFinder {
+    fn find_cactus(&self) -> Graph;
+}
+
+struct AlgebraicTriangleRemover<'a> {
     y_mat: &'a mut M,
     n_mat: &'a mut M,
     triangles: &'a mut HashSet<(usize, usize, usize)>,
     indeterminates: &'a HashMap<(usize, usize, usize), f32>,
 }
 
-impl<'a> TriangleRemover<'a> {
+impl<'a> AlgebraicTriangleRemover<'a> {
     fn range_halving(&self, first: usize, last: usize) -> Vec<(usize, usize)> {
         match last - first {
             0 => vec![],
@@ -172,13 +181,15 @@ impl<'a> TriangleRemover<'a> {
 
         if p_len == 1 && r_len == 1 && c_len == 1 {
             let triangle = (p_s, r_s, c_s);
-
             if let Some(&x) = self.indeterminates.get(&triangle) {
                 add_triangle_to_y(self.y_mat, triangle, -x);
-                let det = self.y_mat.det().unwrap();
-                if det != 0.0 {
-                    *self.n_mat = self.y_mat.inv().unwrap();
+                if let Ok(n_mat) = self.y_mat.inv() {
+                    *self.n_mat = n_mat;
                     self.triangles.remove(&triangle);
+                    println!("Removed triangle: {:?}", triangle);
+                    println!("Y matrix: ");
+                    print_matrix(self.y_mat);
+                    removed = true;
                 } else {
                     add_triangle_to_y(self.y_mat, triangle, x);
                 }
@@ -201,19 +212,29 @@ impl<'a> TriangleRemover<'a> {
     }
 }
 
+pub fn print_matrix(m: &M) {
+    for i in 0..m.shape()[0] {
+        for j in 0..m.shape()[1] {
+            print!("{:.2} ", m[[i, j]]);
+        }
+        println!();
+    }
+}
+
 fn augment_cactus(_full: &Graph, _cactus: &mut Graph) {}
 
 pub fn cacti_approximation(g: &Graph) -> Graph {
     let n = g.num_of_vertices();
     let mut triangles = list_triangles(g);
     println!("Triangles: {:?}", triangles);
-    triangles = purify_triangles(&triangles);
     println!("Purified triangles: {:?}", triangles);
     let indeterminates = triangles_to_indeterminates(&triangles);
     let mut y_mat = calc_y(&indeterminates, n);
+    println!("Y matrix: ");
+    print_matrix(&y_mat);
 
     if let Ok(mut n_mat) = y_mat.inv() {
-        let mut tr = TriangleRemover {
+        let mut tr = AlgebraicTriangleRemover {
             y_mat: &mut y_mat,
             n_mat: &mut n_mat,
             triangles: &mut triangles,
@@ -222,6 +243,8 @@ pub fn cacti_approximation(g: &Graph) -> Graph {
 
         tr.graphic_remove((0, n), (0, n), (0, n));
     }
+
+    //triangles = purify_triangles(&triangles);
 
     // construct cactus with the remaining edges
     let mut maximum_cactus = triangles_to_cactus(n, &triangles);
