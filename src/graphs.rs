@@ -82,6 +82,12 @@ impl Graph {
         self.neighbors[from].contains(&to)
     }
 
+    pub fn add_vertex(&mut self) -> usize {
+        self.neighbors.push(HashSet::new());
+        self.num_of_vertices += 1;
+        self.num_of_vertices - 1
+    }
+
     pub fn add_edge(&mut self, from: usize, to: usize) -> bool {
         // both vertices must be valid
         if !self.is_valid_vertex(from) || !self.is_valid_vertex(to) {

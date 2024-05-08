@@ -1,5 +1,19 @@
 use crate::graphs::Graph;
-use crate::planarity::is_planar;
+use crate::planarity::{is_planar, split_graph_into_connected};
+
+#[test]
+fn splitting_complete_graph() {
+    let graph = Graph::complete(10);
+    let connected_components = split_graph_into_connected(&graph);
+    assert_eq!(connected_components.len(), 1);
+}
+
+#[test]
+fn splitting_empty_graph() {
+    let graph = Graph::empty(10);
+    let connected_components = split_graph_into_connected(&graph);
+    assert_eq!(connected_components.len(), 10);
+}
 
 #[test]
 fn k4_test() {

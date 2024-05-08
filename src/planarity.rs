@@ -154,3 +154,33 @@ pub fn is_planar(graph: &Graph) -> bool {
     let mut planarity = Planarity::new(graph);
     planarity.is_planar()
 }
+
+pub fn split_graph_into_connected(graph: &Graph) -> Vec<Graph> {
+    let n = graph.num_of_vertices();
+    let mut connected_components = vec![];
+    let mut queue = Vec::new();
+    let mut new_index = vec![None; n];
+
+    for v in graph.vertices() {
+        if new_index[v].is_none() {
+            let mut component = Graph::new();
+            new_index[v] = Some(component.add_vertex());
+            queue.push(v);
+
+            while let Some(u) = queue.pop() {
+                for w in graph.neighbors(u).unwrap() {
+                    if new_index[*w].is_none() {
+                        new_index[*w] = Some(component.add_vertex());
+                        queue.push(*w);
+                    }
+
+                    component.add_edge(new_index[u].unwrap(), new_index[*w].unwrap());
+                }
+            }
+
+            connected_components.push(component);
+        }
+    }
+
+    connected_components
+}
