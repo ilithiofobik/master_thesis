@@ -72,17 +72,39 @@ impl Planarity<'_> {
                     let lowpt2vw = self.lowpt2[&(v, w)];
                     let lowpt2e = self.lowpt2[&e];
 
-                    if lowptvw < lowpte {
-                        self.lowpt2.insert(e, std::cmp::min(lowpte, lowpt2vw));
-                        self.lowpt.insert(e, lowptvw);
-                    } else if lowptvw > lowpte {
-                        self.lowpt2.insert(e, std::cmp::min(lowpt2e, lowptvw));
-                    } else {
-                        self.lowpt2.insert(e, std::cmp::min(lowpt2e, lowpt2vw));
+                    match lowptvw.cmp(&lowpte) {
+                        std::cmp::Ordering::Less => {
+                            self.lowpt2.insert(e, std::cmp::min(lowpte, lowpt2vw));
+                            self.lowpt.insert(e, lowptvw);
+                        }
+                        std::cmp::Ordering::Greater => {
+                            self.lowpt2.insert(e, std::cmp::min(lowpt2e, lowptvw));
+                        }
+                        std::cmp::Ordering::Equal => {
+                            self.lowpt2.insert(e, std::cmp::min(lowpt2e, lowpt2vw));
+                        }
                     }
                 }
             }
         }
+    }
+
+    fn dfs2(&mut self, v: usize) -> bool {
+        let e = self.parent_edge[v];
+        // get outgoing edges and sort them by nesting_depth
+        let mut outgoing_edges = self
+            .graph
+            .neighbors(v)
+            .unwrap()
+            .iter()
+            .map(|&w| (v, w))
+            .filter(|&e| self.orient[&e] == e)
+            .collect::<Vec<_>>();
+        outgoing_edges.sort_by(|&a, &b| self.nesting_depth[&a].cmp(&self.nesting_depth[&b]));
+
+        for e_i in outgoing_edges {}
+
+        true
     }
 
     // runs a planar test for simple connected graphs
@@ -90,10 +112,8 @@ impl Planarity<'_> {
         // Orientation phase
         self.height[0] = Some(0);
         self.dfs1(0);
-
         // Testing phase
-
-        true
+        self.dfs2(0)
     }
 }
 
