@@ -280,10 +280,8 @@ impl Planarity<'_> {
                     if let Some(e) = e {
                         self.lowpt_edge.insert(e, self.lowpt_edge[&e_i]);
                     }
-                } else {
-                    if !self.add_edge_constraints(e_i, e.unwrap()) {
-                        return false;
-                    }
+                } else if !self.add_edge_constraints(e_i, e.unwrap()) {
+                    return false;
                 }
             }
         }

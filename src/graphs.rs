@@ -1,4 +1,3 @@
-use core::num;
 use fastrand;
 use std::collections::HashSet;
 use std::ops::Range;
@@ -77,7 +76,7 @@ impl Graph {
         Graph {
             num_of_vertices,
             num_of_edges: num_of_vertices * (num_of_vertices - 1) / 2,
-            neighbors: neighbors,
+            neighbors,
         }
     }
 
@@ -102,7 +101,7 @@ impl Graph {
         Graph {
             num_of_vertices,
             num_of_edges,
-            neighbors: neighbors,
+            neighbors,
         }
     }
 

@@ -5,9 +5,9 @@ use crate::graphs::Graph;
 use fastrand;
 use itertools::*;
 use ndarray::Array2;
-use ndarray_linalg::solve::Determinant;
+
 use ndarray_linalg::solve::Inverse;
-use ndarray_linalg::Scalar;
+
 use std::collections::HashMap;
 use std::collections::HashSet;
 

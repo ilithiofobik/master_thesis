@@ -1,15 +1,15 @@
 use crate::rand_graphs::bliztstein_generation;
 
 fn bliztstein_test(d: &[usize]) {
-    let graph = bliztstein_generation(&d).unwrap();
+    let graph = bliztstein_generation(d).unwrap();
     assert_eq!(graph.num_of_edges(), d.iter().sum::<usize>() / 2);
 
-    for u in 0..d.len() {
+    for (u, &du) in d.iter().enumerate() {
         match graph.neighbors(u) {
             Some(neighbors) => {
-                assert_eq!(neighbors.len(), d[u]);
+                assert_eq!(neighbors.len(), du);
             }
-            None => assert!(false, "Vertex {} not found", u),
+            None => panic!("Vertex {} not found", u),
         }
     }
 }
@@ -38,5 +38,5 @@ fn bliztstein_generation_complete_test() {
 #[test]
 fn bliztstein_generation_non_graphical_test() {
     let d = vec![4, 3, 2, 1, 0];
-    assert_eq!(bliztstein_generation(&d).is_err(), true);
+    assert!(bliztstein_generation(&d).is_err());
 }
