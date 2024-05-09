@@ -215,7 +215,41 @@ impl Planarity<'_> {
         true
     }
 
-    fn trim_backedges_ending_at_parent(&mut self, u: usize) {}
+    fn lowest(&self, p: &ConflictPair) -> usize {
+        if p.left.is_none() {
+            return self.lowpt[&p.right.low.unwrap()];
+        }
+
+        if p.right.is_none() {
+            return self.lowpt[&p.left.low.unwrap()];
+        }
+
+        return std::cmp::min(
+            self.lowpt[&p.left.low.unwrap()],
+            self.lowpt[&p.right.low.unwrap()],
+        );
+    }
+
+    fn trim_backedges_ending_at_parent(&mut self, u: usize) {
+        while !self.s.is_empty() && self.lowest(self.s.last().unwrap()) == self.height[u].unwrap() {
+            self.s.pop();
+        }
+
+        if !self.s.is_empty() {
+            let mut p = self.s.pop().unwrap();
+
+            while p.left.high.is_some() && p.left.high.unwrap().0 == u {
+                p.left.high = Some(self.reff[&p.left.high.unwrap()]);
+            }
+
+            if p.left.high.is_none() && p.left.low.is_some() {
+                self.reff.insert(p.left.low.unwrap(), p.right.low.unwrap());
+                p.left.low = None;
+            }
+
+            self.s.push(p);
+        }
+    }
 
     fn dfs2(&mut self, v: usize) -> bool {
         let e = self.parent_edge[v];
