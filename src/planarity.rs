@@ -2,6 +2,18 @@ use crate::graphs::DirectedGraph;
 use crate::graphs::Graph;
 use std::collections::HashMap;
 
+#[derive(Clone, Copy)]
+struct Interval {
+    low: Option<(usize, usize)>,
+    high: Option<(usize, usize)>,
+}
+
+#[derive(Clone, Copy)]
+struct ConflictPair {
+    left: Option<Interval>,
+    right: Option<Interval>,
+}
+
 struct Planarity<'a> {
     graph: &'a Graph,
     n: usize,
@@ -11,6 +23,10 @@ struct Planarity<'a> {
     lowpt2: HashMap<(usize, usize), usize>,
     nesting_depth: HashMap<(usize, usize), usize>,
     height: Vec<Option<usize>>,
+    s: Vec<ConflictPair>,
+    stack_bottom: HashMap<(usize, usize), ConflictPair>,
+    lowpt_edge: HashMap<(usize, usize), (usize, usize)>,
+    reff: HashMap<(usize, usize), (usize, usize)>,
 }
 
 impl Planarity<'_> {
@@ -23,6 +39,10 @@ impl Planarity<'_> {
         let lowpt = HashMap::with_capacity(m);
         let lowpt2 = HashMap::with_capacity(m);
         let nesting_depth = HashMap::with_capacity(m);
+        let s = Vec::new();
+        let stack_bottom = HashMap::with_capacity(m);
+        let lowpt_edge = HashMap::with_capacity(m);
+        let reff = HashMap::with_capacity(m);
 
         Planarity {
             graph,
@@ -33,6 +53,10 @@ impl Planarity<'_> {
             lowpt2,
             nesting_depth,
             height,
+            s,
+            stack_bottom,
+            lowpt_edge,
+            reff,
         }
     }
 
@@ -89,6 +113,10 @@ impl Planarity<'_> {
         }
     }
 
+    fn add_edge_constraints(&mut self, e_i: (usize, usize)) {}
+
+    fn trim_backedges_ending_at_parent(&mut self, u: usize) {}
+
     fn dfs2(&mut self, v: usize) -> bool {
         let e = self.parent_edge[v];
         // get outgoing edges and sort them by nesting_depth
@@ -102,7 +130,61 @@ impl Planarity<'_> {
             .collect::<Vec<_>>();
         outgoing_edges.sort_by(|&a, &b| self.nesting_depth[&a].cmp(&self.nesting_depth[&b]));
 
-        for e_i in outgoing_edges {}
+        for (i, &e_i) in outgoing_edges.iter().enumerate() {
+            if let Some(top) = self.s.last() {
+                self.stack_bottom.insert(e_i, *top);
+            }
+
+            // if tree edge go deeper
+            // else set lowpt_edge and push conflict pair to stack
+            if Some(e_i) == self.parent_edge[e_i.1] {
+                self.dfs2(e_i.1);
+            } else {
+                self.lowpt_edge.insert(e_i, e_i);
+                let conflict_pair = ConflictPair {
+                    left: None,
+                    right: Some(Interval {
+                        low: Some(e_i),
+                        high: Some(e_i),
+                    }),
+                };
+                self.s.push(conflict_pair);
+            }
+
+            // integrate new return edges
+            if self.lowpt[&e_i] < self.height[v].unwrap() {
+                if i == 0 {
+                    if let Some(e) = e {
+                        self.lowpt_edge.insert(e, self.lowpt_edge[&e_i]);
+                    }
+                } else {
+                    // algorithm 4
+                    self.add_edge_constraints(e_i);
+                }
+            }
+
+            // remove back edges returning to parent
+            if let Some(e) = e {
+                let u = e.0;
+                self.trim_backedges_ending_at_parent(u);
+
+                if self.lowpt[&e] < self.height[u].unwrap() {
+                    if let Some(top) = self.s.last() {
+                        let h_l = top.left.map(|l| l.high).flatten();
+                        let h_r = top.right.map(|r| r.high).flatten();
+
+                        if h_l.is_some()
+                            && (h_r.is_none()
+                                || self.lowpt[&h_l.unwrap()] > self.lowpt[&h_r.unwrap()])
+                        {
+                            self.reff.insert(e, self.lowpt_edge[&h_l.unwrap()]);
+                        } else {
+                            self.reff.insert(e, self.lowpt_edge[&h_r.unwrap()]);
+                        }
+                    }
+                }
+            }
+        }
 
         true
     }
