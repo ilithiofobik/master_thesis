@@ -86,17 +86,17 @@ impl Graph {
         let num_of_edges = n * m;
 
         if num_of_edges == 0 {
-            return Graph::empty(0);
+            return Graph::empty(num_of_vertices);
         }
 
         let mut neighbors = Vec::with_capacity(num_of_vertices);
-        for i in 0..n {
-            let set = (n..num_of_vertices).collect::<HashSet<usize>>();
-            neighbors.push(set);
+        let m_set = (n..num_of_vertices).collect::<HashSet<usize>>();
+        for _ in 0..n {
+            neighbors.push(m_set.clone());
         }
-        for j in n..num_of_vertices {
-            let set = (0..n).collect::<HashSet<usize>>();
-            neighbors.push(set);
+        let n_set = (0..n).collect::<HashSet<usize>>();
+        for _ in n..num_of_vertices {
+            neighbors.push(n_set.clone());
         }
 
         Graph {

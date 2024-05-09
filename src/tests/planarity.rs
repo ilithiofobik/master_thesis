@@ -1,5 +1,6 @@
 use crate::graphs::Graph;
 use crate::planarity::{is_planar, split_graph_into_connected};
+use crate::rand_graphs::bliztstein_generation;
 
 #[test]
 fn splitting_complete_graph() {
@@ -50,8 +51,15 @@ fn k33_test() {
 #[test]
 fn k33_minus_edge_test() {
     let mut graph = Graph::bipartite_complete(3, 3);
-    graph.remove_edge(0, 3);
+    assert!(graph.remove_edge(0, 3));
     assert!(is_planar(&graph));
+}
+
+#[test]
+fn random_graph_deg2_test() {
+    let graph = bliztstein_generation(&vec![2; 1000]);
+    assert!(graph.is_ok());
+    assert!(is_planar(&graph.unwrap()));
 }
 
 #[test]

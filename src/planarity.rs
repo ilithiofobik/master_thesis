@@ -31,7 +31,6 @@ impl ConflictPair {
 
 struct Planarity<'a> {
     graph: &'a Graph,
-    n: usize,
     parent_edge: Vec<Option<(usize, usize)>>,
     orient: HashMap<(usize, usize), (usize, usize)>,
     lowpt: HashMap<(usize, usize), usize>,
@@ -61,7 +60,6 @@ impl Planarity<'_> {
 
         Planarity {
             graph,
-            n,
             parent_edge,
             orient,
             lowpt,
@@ -137,45 +135,38 @@ impl Planarity<'_> {
 
         // merge return edges of e_i into P.right
         loop {
-            if let Some(mut q) = self.s.pop() {
-                if q.left.is_some() {
-                    q.swap();
-                }
+            let mut q = self.s.pop().unwrap();
 
-                if q.left.is_some() {
-                    return false;
-                }
-
-                if self.lowpt[&q.right.low.unwrap()] > self.lowpt[&e] {
-                    if p.right.is_none() {
-                        p.right.high = q.right.high;
-                    } else {
-                        self.reff.insert(p.right.low.unwrap(), q.right.low.unwrap());
-                    }
-
-                    p.right.low = q.right.low;
-                } else {
-                    self.reff.insert(q.right.low.unwrap(), self.lowpt_edge[&e]);
-                }
+            if q.left.is_some() {
+                q.swap();
             }
 
-            if self.stack_bottom.get(&e_i) == self.s.last() {
+            if q.left.is_some() {
+                return false;
+            }
+
+            if self.lowpt[&q.right.low.unwrap()] > self.lowpt[&e] {
+                if p.right.is_none() {
+                    p.right.high = q.right.high;
+                } else {
+                    self.reff
+                        .insert(p.right.low.unwrap(), q.right.high.unwrap());
+                }
+
+                p.right.low = q.right.low;
+            } else {
+                self.reff.insert(q.right.low.unwrap(), self.lowpt_edge[&e]);
+            }
+
+            if self.stack_bottom.get(&e_i) == self.top() {
                 break;
             }
         }
 
         // merge conflicting return edges of e_1,..,e_{i-1} into P.L
-        loop {
-            if self.s.is_empty() {
-                break;
-            }
-
-            let top = self.s.last().unwrap();
-
-            if !self.is_conflicting(top.left, e_i) && !self.is_conflicting(top.right, e_i) {
-                break;
-            }
-
+        while self.is_conflicting(self.top().unwrap().left, e_i)
+            || self.is_conflicting(self.top().unwrap().right, e_i)
+        {
             let mut q = self.s.pop().unwrap();
             if self.is_conflicting(q.right, e_i) {
                 q.swap();
@@ -186,8 +177,8 @@ impl Planarity<'_> {
 
             // merge interval below lowpt(e_i) into p.r
             if let Some(prl) = p.right.low {
-                if let Some(qrl) = q.right.low {
-                    self.reff.insert(prl, qrl);
+                if let Some(qrh) = q.right.high {
+                    self.reff.insert(prl, qrh);
                 }
             }
 
@@ -227,15 +218,13 @@ impl Planarity<'_> {
     }
 
     fn trim_backedges_ending_at_parent(&mut self, u: usize) {
-        while !self.s.is_empty() && self.lowest(self.s.last().unwrap()) == self.height[u] {
+        while !self.s.is_empty() && self.lowest(self.top().unwrap()) == self.height[u] {
             self.s.pop();
         }
 
-        if !self.s.is_empty() {
-            let mut p = self.s.pop().unwrap();
-
-            while p.left.high.is_some() && p.left.high.unwrap().0 == u {
-                p.left.high = Some(self.reff[&p.left.high.unwrap()]);
+        if let Some(mut p) = self.s.pop() {
+            while p.left.high.is_some() && p.left.high.unwrap().1 == u {
+                p.left.high = self.reff.get(&p.left.high.unwrap()).copied();
             }
 
             if p.left.high.is_none() && p.left.low.is_some() {
@@ -245,6 +234,10 @@ impl Planarity<'_> {
 
             self.s.push(p);
         }
+    }
+
+    fn top(&self) -> Option<&ConflictPair> {
+        self.s.last()
     }
 
     fn dfs2(&mut self, v: usize) -> bool {
@@ -258,10 +251,10 @@ impl Planarity<'_> {
             .map(|&w| (v, w))
             .filter(|&e| self.orient[&e] == e)
             .collect::<Vec<_>>();
-        outgoing_edges.sort_by(|&a, &b| self.nesting_depth[&a].cmp(&self.nesting_depth[&b]));
+        outgoing_edges.sort_by_key(|&e| self.nesting_depth[&e]);
 
         for (i, &e_i) in outgoing_edges.iter().enumerate() {
-            if let Some(top) = self.s.last() {
+            if let Some(top) = self.top() {
                 self.stack_bottom.insert(e_i, *top);
             }
 
@@ -293,26 +286,29 @@ impl Planarity<'_> {
                     }
                 }
             }
+        }
 
-            // remove back edges returning to parent
-            if let Some(e) = e {
-                let u = e.0;
-                self.trim_backedges_ending_at_parent(u);
+        // remove back edges returning to parent
+        if let Some(e) = e {
+            let u = e.0;
+            self.trim_backedges_ending_at_parent(u);
 
-                if self.lowpt[&e] < self.height[u] {
-                    if let Some(top) = self.s.last() {
-                        let h_l = top.left.high;
-                        let h_r = top.right.high;
+            if self.lowpt[&e] < self.height[u] {
+                if let Some(top) = self.s.last() {
+                    let h_l = top.left.high;
+                    let h_r = top.right.high;
 
-                        if h_l.is_some()
-                            && (h_r.is_none()
-                                || self.lowpt[&h_l.unwrap()] > self.lowpt[&h_r.unwrap()])
-                        {
-                            self.reff.insert(e, self.lowpt_edge[&h_l.unwrap()]);
+                    let high = if let Some(h_l) = h_l {
+                        if let Some(h_r) = h_r {
+                            std::cmp::max_by_key(h_l, h_r, |&h| self.lowpt[&h])
                         } else {
-                            self.reff.insert(e, self.lowpt_edge[&h_r.unwrap()]);
+                            h_l
                         }
-                    }
+                    } else {
+                        h_r.unwrap()
+                    };
+
+                    self.reff.insert(e, high);
                 }
             }
         }
@@ -323,10 +319,23 @@ impl Planarity<'_> {
     // runs a planar test for simple connected graphs
     pub fn is_planar(&mut self) -> bool {
         // Orientation phase
-        self.height[0] = 0;
-        self.dfs1(0);
+        let mut roots = Vec::new();
+        for v in self.graph.vertices() {
+            if self.height[v] == usize::MAX {
+                self.height[v] = 0;
+                roots.push(v);
+                self.dfs1(v);
+            }
+        }
+
         // Testing phase
-        self.dfs2(0)
+        for &root in roots.iter() {
+            if !self.dfs2(root) {
+                return false;
+            }
+        }
+
+        true
     }
 }
 
@@ -345,27 +354,13 @@ fn trivial_test(graph: &Graph) -> Option<bool> {
     None
 }
 
-fn is_planar_connected(graph: &Graph) -> bool {
+pub fn is_planar(graph: &Graph) -> bool {
     if let Some(result) = trivial_test(graph) {
         return result;
     }
 
     let mut planarity = Planarity::new(graph);
     planarity.is_planar()
-}
-
-pub fn is_planar(graph: &Graph) -> bool {
-    if let Some(result) = trivial_test(graph) {
-        return result;
-    }
-
-    let connected_components = split_graph_into_connected(graph);
-    for component in connected_components {
-        if !is_planar_connected(&component) {
-            return false;
-        }
-    }
-    true
 }
 
 pub fn split_graph_into_connected(graph: &Graph) -> Vec<Graph> {
