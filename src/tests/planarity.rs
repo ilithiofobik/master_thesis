@@ -6,6 +6,9 @@ fn splitting_complete_graph() {
     let graph = Graph::complete(10);
     let connected_components = split_graph_into_connected(&graph);
     assert_eq!(connected_components.len(), 1);
+    let component = &connected_components[0];
+    assert_eq!(component.num_of_vertices(), 10);
+    assert_eq!(component.num_of_edges(), 45);
 }
 
 #[test]
@@ -13,6 +16,10 @@ fn splitting_empty_graph() {
     let graph = Graph::empty(10);
     let connected_components = split_graph_into_connected(&graph);
     assert_eq!(connected_components.len(), 10);
+    for component in connected_components {
+        assert_eq!(component.num_of_vertices(), 1);
+        assert_eq!(component.num_of_edges(), 0);
+    }
 }
 
 #[test]

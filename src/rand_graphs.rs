@@ -62,7 +62,7 @@ fn is_graphical_i_j(d_seq: &mut [usize], i: usize, j: usize) -> bool {
     result
 }
 
-fn get_rand_neighbour(ppb_sum: usize, graphical_candidates: &[&usize], d: &[usize]) -> usize {
+fn _get_rand_neighbour(ppb_sum: usize, graphical_candidates: &[&usize], d: &[usize]) -> usize {
     let r = fastrand::usize(0..ppb_sum);
     let mut sum = 0;
     let mut j_idx = 0;

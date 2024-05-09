@@ -1,158 +1,138 @@
+use crate::graphs::DirectedGraph;
 use crate::graphs::Graph;
 use std::collections::HashMap;
-use std::collections::HashSet;
-use std::collections::VecDeque;
-use std::rc::Rc;
-use std::sync::RwLock;
-use std::vec;
-
-const CCW: usize = 0;
-const CW: usize = 1;
-
-enum AdjacencyListLink {
-    InV(usize),
-    InR(usize),
-    InE(usize),
-}
-
-struct HalfEdge {
-    link: [AdjacencyListLink; 2],
-    neighbour: usize,
-    sign: isize,
-}
-
-struct RootVertex {
-    link: [AdjacencyListLink; 2],
-    parent: usize,
-}
-
-struct Vertex {
-    link: [AdjacencyListLink; 2],
-    dfs_parent: usize,
-    least_ancestor: usize,
-    lowpoint: usize,
-    backedge_flag: usize,
-    pertinent_roots: Vec<usize>,
-    separated_dfs_children: Vec<Rc<RwLock<usize>>>,
-    p_node_in_child_list_of_parent: Rc<RwLock<usize>>,
-}
-
-struct EmbeddingGraph {
-    n: usize,
-    m: usize,
-    v: Vec<Vertex>,
-    r: Vec<RootVertex>,
-    e: Vec<HalfEdge>,
-    s: Vec<usize>,
-}
 
 struct Planarity<'a> {
     graph: &'a Graph,
     n: usize,
-    dfi: Vec<Option<usize>>,
-    lowpoint: Vec<usize>,
+    parent_edge: Vec<Option<(usize, usize)>>,
+    orient: HashMap<(usize, usize), (usize, usize)>,
+    lowpt: HashMap<(usize, usize), usize>,
+    lowpt2: HashMap<(usize, usize), usize>,
+    nesting_depth: HashMap<(usize, usize), usize>,
+    height: Vec<Option<usize>>,
 }
 
 impl Planarity<'_> {
     pub fn new(graph: &Graph) -> Planarity {
         let n = graph.num_of_vertices();
-        let dfi = vec![None; n];
-        let lowpoint = vec![0; n];
+        let m = graph.num_of_edges();
+        let height = vec![None; n];
+        let parent_edge = vec![None; n];
+        let orient = HashMap::with_capacity(2 * m);
+        let lowpt = HashMap::with_capacity(m);
+        let lowpt2 = HashMap::with_capacity(m);
+        let nesting_depth = HashMap::with_capacity(m);
+
         Planarity {
             graph,
             n,
-            dfi,
-            lowpoint,
+            parent_edge,
+            orient,
+            lowpt,
+            lowpt2,
+            nesting_depth,
+            height,
         }
     }
 
-    fn biconnect(
-        &mut self,
-        v: usize,
-        u: usize,
-        counter: &mut usize,
-        edge_stack: &mut Vec<(usize, usize)>,
-    ) {
-        *counter += 1;
-        self.dfi[v] = Some(*counter);
-        self.lowpoint[v] = *counter;
+    fn dfs1(&mut self, v: usize) {
+        let e = self.parent_edge[v];
 
-        let mut sorted_neighbours_of_v = (*self.graph.neighbors(v).unwrap())
-            .iter()
-            .cloned()
-            .collect::<Vec<usize>>();
-        sorted_neighbours_of_v.sort();
+        for &w in self.graph.neighbors(v).unwrap() {
+            if !self.orient.contains_key(&(v, w)) {
+                // set orientation
+                self.orient.insert((v, w), (v, w));
+                self.orient.insert((w, v), (v, w));
+                // set lowpoints
+                self.lowpt.insert((v, w), self.height[v].unwrap());
+                self.lowpt2.insert((v, w), self.height[v].unwrap());
 
-        for w in sorted_neighbours_of_v {
-            match self.dfi[w] {
-                None => {
-                    self.biconnect(w, v, counter, edge_stack);
-                    self.lowpoint[v] = std::cmp::min(self.lowpoint[v], self.lowpoint[w]);
+                // if tree edge set parent and height and go deeper
+                // else set lowpt to be the height of w
+                if self.height[w].is_none() {
+                    self.parent_edge[w] = Some((v, w));
+                    self.height[w] = Some(self.height[v].unwrap() + 1);
+                    self.dfs1(w);
+                } else {
+                    self.lowpt.insert((v, w), self.height[w].unwrap());
                 }
-                Some(dfi_w) => {
-                    if dfi_w < self.dfi[v].unwrap() && w != u {
-                        self.lowpoint[v] = std::cmp::min(self.lowpoint[v], dfi_w);
+
+                // determine nesting depth
+                self.nesting_depth.insert((v, w), 2 * self.lowpt[&(v, w)]);
+                if self.lowpt2[&(v, w)] < self.height[v].unwrap() {
+                    self.nesting_depth
+                        .insert((v, w), self.nesting_depth[&(v, w)] + 1);
+                }
+
+                // update lowpoints of parent edge
+                if let Some(e) = e {
+                    let lowptvw = self.lowpt[&(v, w)];
+                    let lowpte = self.lowpt[&e];
+                    let lowpt2vw = self.lowpt2[&(v, w)];
+                    let lowpt2e = self.lowpt2[&e];
+
+                    if lowptvw < lowpte {
+                        self.lowpt2.insert(e, std::cmp::min(lowpte, lowpt2vw));
+                        self.lowpt.insert(e, lowptvw);
+                    } else if lowptvw > lowpte {
+                        self.lowpt2.insert(e, std::cmp::min(lowpt2e, lowptvw));
+                    } else {
+                        self.lowpt2.insert(e, std::cmp::min(lowpt2e, lowpt2vw));
                     }
                 }
             }
         }
     }
 
-    fn compute_lowpoints(&mut self) {
-        let mut counter = 0;
-        let mut edge_stack = vec![];
-        for w in self.graph.vertices() {
-            if self.dfi[w].is_none() {
-                self.biconnect(w, self.n + 1, &mut counter, &mut edge_stack);
-            }
-        }
-    }
-
-    fn initialize_embedding_graph(&mut self) {}
-    fn compute_separated_dfs_children(&mut self) {}
-    fn embed_edge(&mut self, u: usize, v: usize) {}
-    fn embed(&mut self) -> bool {
-        true
-    }
-
-    fn print_lowpoints(&self) {
-        println!("Lowpoints:");
-        for i in 0..self.n {
-            println!("{}: {}", i, self.lowpoint[i]);
-        }
-    }
-
-    fn print_dfi(&self) {
-        println!("DFI:");
-        for i in 0..self.n {
-            println!("{}: {:?}", i, self.dfi[i]);
-        }
-    }
-
+    // runs a planar test for simple connected graphs
     pub fn is_planar(&mut self) -> bool {
-        self.compute_lowpoints();
-        self.print_lowpoints();
-        self.print_dfi();
+        // Orientation phase
+        self.height[0] = Some(0);
+        self.dfs1(0);
+
+        // Testing phase
 
         true
     }
 }
 
-pub fn is_planar(graph: &Graph) -> bool {
+fn trivial_test(graph: &Graph) -> Option<bool> {
     let n = graph.num_of_vertices();
     let m = graph.num_of_edges();
 
-    // check for trivial cases
     if n <= 4 {
-        return true;
+        return Some(true);
     }
 
     if m > 3 * n - 6 {
-        return false;
+        return Some(false);
+    }
+
+    None
+}
+
+fn is_planar_connected(graph: &Graph) -> bool {
+    if let Some(result) = trivial_test(graph) {
+        return result;
     }
 
     let mut planarity = Planarity::new(graph);
     planarity.is_planar()
+}
+
+pub fn is_planar(graph: &Graph) -> bool {
+    if let Some(result) = trivial_test(graph) {
+        return result;
+    }
+
+    let connected_components = split_graph_into_connected(graph);
+    for component in connected_components {
+        if !is_planar_connected(&component) {
+            return false;
+        }
+    }
+    true
 }
 
 pub fn split_graph_into_connected(graph: &Graph) -> Vec<Graph> {
