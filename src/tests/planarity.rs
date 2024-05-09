@@ -29,6 +29,32 @@ fn k4_test() {
 }
 
 #[test]
+fn k5_test() {
+    let graph = Graph::complete(5);
+    assert!(!is_planar(&graph));
+}
+
+#[test]
+fn k5_minus_edge_test() {
+    let mut graph = Graph::complete(5);
+    graph.remove_edge(0, 1);
+    assert!(is_planar(&graph));
+}
+
+#[test]
+fn k33_test() {
+    let graph = Graph::bipartite_complete(3, 3);
+    assert!(!is_planar(&graph));
+}
+
+#[test]
+fn k33_minus_edge_test() {
+    let mut graph = Graph::bipartite_complete(3, 3);
+    graph.remove_edge(0, 3);
+    assert!(is_planar(&graph));
+}
+
+#[test]
 fn tarjan_test() {
     let mut graph = Graph::empty(9);
     graph.add_edge(0, 1);

@@ -167,7 +167,7 @@ impl Planarity<'_> {
                 }
             }
 
-            if self.stack_bottom[&e_i] == *self.s.last().unwrap() {
+            if Some(&self.stack_bottom[&e_i]) == self.s.last() {
                 break;
             }
         }

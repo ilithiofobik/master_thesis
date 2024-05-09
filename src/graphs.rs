@@ -1,3 +1,4 @@
+use core::num;
 use fastrand;
 use std::collections::HashSet;
 use std::ops::Range;
@@ -76,6 +77,31 @@ impl Graph {
         Graph {
             num_of_vertices,
             num_of_edges: num_of_vertices * (num_of_vertices - 1) / 2,
+            neighbors: neighbors,
+        }
+    }
+
+    pub fn bipartite_complete(n: usize, m: usize) -> Self {
+        let num_of_vertices = n + m;
+        let num_of_edges = n * m;
+
+        if num_of_edges == 0 {
+            return Graph::empty(0);
+        }
+
+        let mut neighbors = Vec::with_capacity(num_of_vertices);
+        for i in 0..n {
+            let set = (n..num_of_vertices).collect::<HashSet<usize>>();
+            neighbors.push(set);
+        }
+        for j in n..num_of_vertices {
+            let set = (0..n).collect::<HashSet<usize>>();
+            neighbors.push(set);
+        }
+
+        Graph {
+            num_of_vertices,
+            num_of_edges,
             neighbors: neighbors,
         }
     }
