@@ -1,17 +1,40 @@
-use crate::graphs::DirectedGraph;
 use crate::graphs::Graph;
 use std::collections::HashMap;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Default)]
 struct Interval {
     low: Option<(usize, usize)>,
     high: Option<(usize, usize)>,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Default)]
 struct ConflictPair {
-    left: Option<Interval>,
-    right: Option<Interval>,
+    left: Interval,
+    right: Interval,
+}
+
+impl Interval {
+    pub fn is_none(&self) -> bool {
+        self.low.is_none() && self.high.is_none()
+    }
+
+    pub fn is_some(&self) -> bool {
+        !self.is_none()
+    }
+}
+
+impl ConflictPair {
+    pub fn swap(&mut self) {
+        std::mem::swap(&mut self.left, &mut self.right);
+    }
+
+    pub fn is_none(&self) -> bool {
+        self.left.is_none() && self.right.is_none()
+    }
+
+    pub fn is_some(&self) -> bool {
+        !self.is_none()
+    }
 }
 
 struct Planarity<'a> {
@@ -113,7 +136,84 @@ impl Planarity<'_> {
         }
     }
 
-    fn add_edge_constraints(&mut self, e_i: (usize, usize)) {}
+    fn is_conflicting(&self, i: Interval, b: (usize, usize)) -> bool {
+        i.is_some() && self.lowpt[&i.high.unwrap()] > self.lowpt[&b]
+    }
+
+    fn add_edge_constraints(&mut self, e_i: (usize, usize), e: (usize, usize)) -> bool {
+        let mut p = ConflictPair::default();
+
+        // merge return edges of e_i into P.right
+        loop {
+            if let Some(mut q) = self.s.pop() {
+                if q.left.is_some() {
+                    q.swap();
+                }
+
+                if q.left.is_some() {
+                    return false;
+                }
+
+                if self.lowpt[&q.right.low.unwrap()] > self.lowpt[&e] {
+                    if p.right.is_none() {
+                        p.right.high = q.right.high;
+                    } else {
+                        self.reff.insert(p.right.low.unwrap(), q.right.low.unwrap());
+                    }
+
+                    p.right.low = q.right.low;
+                } else {
+                    self.reff.insert(q.right.low.unwrap(), self.lowpt_edge[&e]);
+                }
+            }
+
+            if self.stack_bottom[&e_i] == *self.s.last().unwrap() {
+                break;
+            }
+        }
+
+        // merge conflicting return edges of e_1,..,e_{i-1} into P.L
+        loop {
+            if self.s.is_empty() {
+                break;
+            }
+
+            let top = self.s.last().unwrap();
+
+            if !self.is_conflicting(top.left, e_i) && !self.is_conflicting(top.right, e_i) {
+                break;
+            }
+
+            let mut q = self.s.pop().unwrap();
+            if self.is_conflicting(q.right, e_i) {
+                q.swap();
+            }
+            if self.is_conflicting(q.right, e_i) {
+                return false;
+            }
+
+            // merge interval below lowpt(e_i) into p.r
+            self.reff
+                .insert(p.right.low.unwrap(), q.right.high.unwrap());
+            if let Some(qrlow) = q.right.low {
+                p.right.low = Some(qrlow);
+            }
+
+            if p.left.is_none() {
+                p.left.high = q.left.high;
+            } else {
+                self.reff.insert(p.left.low.unwrap(), q.left.high.unwrap());
+            }
+
+            p.left.low = q.left.low;
+        }
+
+        if p != ConflictPair::default() {
+            self.s.push(p);
+        }
+
+        true
+    }
 
     fn trim_backedges_ending_at_parent(&mut self, u: usize) {}
 
@@ -142,11 +242,11 @@ impl Planarity<'_> {
             } else {
                 self.lowpt_edge.insert(e_i, e_i);
                 let conflict_pair = ConflictPair {
-                    left: None,
-                    right: Some(Interval {
+                    left: Interval::default(),
+                    right: Interval {
                         low: Some(e_i),
                         high: Some(e_i),
-                    }),
+                    },
                 };
                 self.s.push(conflict_pair);
             }
@@ -158,8 +258,9 @@ impl Planarity<'_> {
                         self.lowpt_edge.insert(e, self.lowpt_edge[&e_i]);
                     }
                 } else {
-                    // algorithm 4
-                    self.add_edge_constraints(e_i);
+                    if !self.add_edge_constraints(e_i, e.unwrap()) {
+                        return false;
+                    }
                 }
             }
 
@@ -170,8 +271,8 @@ impl Planarity<'_> {
 
                 if self.lowpt[&e] < self.height[u].unwrap() {
                     if let Some(top) = self.s.last() {
-                        let h_l = top.left.map(|l| l.high).flatten();
-                        let h_r = top.right.map(|r| r.high).flatten();
+                        let h_l = top.left.high;
+                        let h_r = top.right.high;
 
                         if h_l.is_some()
                             && (h_r.is_none()
