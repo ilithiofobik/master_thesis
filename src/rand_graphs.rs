@@ -133,3 +133,26 @@ pub fn bliztstein_generation(d_in: &[usize]) -> Result<Graph, &'static str> {
 
     Ok(graph)
 }
+
+pub fn general_random_graph(
+    num_of_vertices: usize,
+    num_of_edges: usize,
+) -> Result<Graph, &'static str> {
+    if 2 * num_of_edges > num_of_vertices * num_of_vertices - num_of_vertices {
+        return Err("The number of edges is too large.");
+    }
+
+    let mut graph = Graph::empty(num_of_vertices);
+
+    let mut edges = (0..num_of_vertices)
+        .flat_map(|from| (from + 1..num_of_vertices).map(move |to| (from, to)))
+        .collect::<Vec<(usize, usize)>>();
+
+    fastrand::shuffle(&mut edges);
+
+    (0..num_of_edges).map(|i| edges[i]).for_each(|(from, to)| {
+        graph.add_edge(from, to);
+    });
+
+    Ok(graph)
+}

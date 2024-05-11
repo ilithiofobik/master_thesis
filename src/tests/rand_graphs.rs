@@ -1,4 +1,4 @@
-use crate::rand_graphs::bliztstein_generation;
+use crate::rand_graphs::*;
 
 fn bliztstein_test(d: &[usize]) {
     let graph = bliztstein_generation(d).unwrap();
@@ -10,6 +10,20 @@ fn bliztstein_test(d: &[usize]) {
                 assert_eq!(neighbors.len(), du);
             }
             None => panic!("Vertex {} not found", u),
+        }
+    }
+}
+
+fn general_random_test(n: usize, k: usize) {
+    let graph = general_random_graph(n, k);
+
+    match graph {
+        Ok(graph) => {
+            assert_eq!(graph.num_of_vertices(), n);
+            assert_eq!(graph.num_of_edges(), k);
+        }
+        Err(_) => {
+            assert!(2 * k > n * n - n);
         }
     }
 }
@@ -39,4 +53,24 @@ fn bliztstein_generation_complete_test() {
 fn bliztstein_generation_non_graphical_test() {
     let d = vec![4, 3, 2, 1, 0];
     assert!(bliztstein_generation(&d).is_err());
+}
+
+#[test]
+fn general_random_0_vertices_0_edges_test() {
+    general_random_test(0, 0)
+}
+
+#[test]
+fn general_random_100_vertices_0_edges_test() {
+    general_random_test(100, 0)
+}
+
+#[test]
+fn general_random_0_vertices_100_edges_test() {
+    general_random_test(0, 100)
+}
+
+#[test]
+fn general_random_100_vertices_100_edges_test() {
+    general_random_test(100, 100)
 }

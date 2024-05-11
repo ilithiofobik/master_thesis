@@ -1,4 +1,3 @@
-use fastrand;
 use std::collections::HashSet;
 use std::ops::Range;
 
@@ -41,22 +40,6 @@ impl Graph {
             num_of_edges: 0,
             neighbors,
         }
-    }
-
-    pub fn random(num_of_vertices: usize, num_of_edges: usize) -> Self {
-        let mut graph = Graph::empty(num_of_vertices);
-
-        let mut edges = (0..num_of_vertices)
-            .flat_map(|from| (from + 1..num_of_vertices).map(move |to| (from, to)))
-            .collect::<Vec<(usize, usize)>>();
-
-        fastrand::shuffle(&mut edges);
-
-        (0..num_of_edges).map(|i| edges[i]).for_each(|(from, to)| {
-            graph.add_edge(from, to);
-        });
-
-        graph
     }
 
     pub fn complete(num_of_vertices: usize) -> Self {
