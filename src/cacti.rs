@@ -206,11 +206,11 @@ pub fn basic_cacti_approximation(g: &Graph) -> Graph {
     // get maximal triangular cactus
     for (a, b, c) in triangle_lister {
         let pairs = [(a, b), (b, c), (c, a)];
-        for (x, y) in pairs {
-            if union_find.same_set(x, y) {
-                continue;
-            }
+
+        if pairs.iter().any(|&(x, y)| union_find.same_set(x, y)) {
+            continue;
         }
+
         for (x, y) in pairs {
             union_find.union(x, y);
             result.add_edge(x, y);

@@ -21,8 +21,6 @@ fn basic_cacti_approximation_complete_test() {
             num_of_edges += available_components - 1;
         }
 
-        cacti.print_edges();
-
         assert_eq!(cacti.num_of_vertices(), n);
         assert_eq!(cacti.num_of_edges(), num_of_edges);
     }
