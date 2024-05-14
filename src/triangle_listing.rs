@@ -1,7 +1,7 @@
 use crate::graphs::Graph;
-use std::{collections::HashSet, hash::Hash};
+use std::collections::HashSet;
 
-fn sort_3tuple<T>(a: T, b: T, c: T) -> (T, T, T)
+pub fn sort_3tuple<T>(a: T, b: T, c: T) -> (T, T, T)
 where
     T: PartialOrd,
 {
@@ -22,40 +22,85 @@ where
     }
 }
 
-pub fn list_triangles(g: &Graph) -> HashSet<(usize, usize, usize)> {
-    let n = g.num_of_vertices();
-    let mut triangles = HashSet::new();
-    let mut marked = HashSet::new();
-    let mut processed = vec![false; n];
+struct TriangleLister<'a> {
+    graph: &'a Graph,
+    marked: HashSet<usize>,
+    processed: Vec<bool>,
+    sorted_vertices: Vec<usize>,
+    u_neighbors: Vec<usize>,
+    u: usize,
+    v: usize,
+}
 
-    let mut sorted_vertices = g.vertices().collect::<Vec<usize>>();
-    sorted_vertices.sort_by_key(|b| std::cmp::Reverse(g.degree(*b)));
+impl TriangleLister<'_> {
+    fn new(graph: &Graph) -> TriangleLister {
+        let n = graph.num_of_vertices();
+        let u = 0;
+        let mut v = 0;
+        let mut marked = HashSet::new();
+        let processed = vec![false; n];
+        let u_neighbors = Vec::new();
+        let mut sorted_vertices = graph.vertices().collect::<Vec<usize>>();
+        sorted_vertices.sort_by_key(|b| graph.degree(*b));
 
-    while let Some(v) = sorted_vertices.pop() {
-        let v_neighbors = g.neighbors(v).unwrap();
-        for u in v_neighbors {
-            if !processed[*u] {
+        if let Some(v_sorted) = sorted_vertices.pop() {
+            v = v_sorted;
+            let v_neighbors = graph.neighbors(v).unwrap();
+            for &u in v_neighbors {
                 marked.insert(u);
             }
         }
 
-        while !marked.is_empty() {
-            let u = *marked.iter().next().unwrap();
-            marked.remove(u);
-            let u_neighbors = g.neighbors(*u).unwrap();
+        TriangleLister {
+            graph,
+            marked,
+            processed,
+            sorted_vertices,
+            u_neighbors,
+            u,
+            v,
+        }
+    }
+}
 
-            for w in u_neighbors {
-                if marked.contains(w) {
-                    let triangle = sort_3tuple(v, *u, *w);
-                    triangles.insert(triangle);
+impl Iterator for TriangleLister<'_> {
+    type Item = (usize, usize, usize);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            if let Some(w) = self.u_neighbors.pop() {
+                if self.marked.contains(&w) {
+                    return Some((self.v, self.u, w));
                 }
+            } else if !self.marked.is_empty() {
+                self.u = *self.marked.iter().next().unwrap();
+                self.marked.remove(&self.u);
+                self.u_neighbors = self
+                    .graph
+                    .neighbors(self.u)
+                    .unwrap()
+                    .iter()
+                    .copied()
+                    .collect();
+            } else if let Some(v) = self.sorted_vertices.pop() {
+                self.processed[self.v] = true;
+                self.v = v;
+                let v_neighbors = self.graph.neighbors(v).unwrap();
+                for &u in v_neighbors {
+                    if !self.processed[u] {
+                        self.marked.insert(u);
+                    }
+                }
+            } else {
+                return None;
             }
         }
-
-        processed[v] = true;
     }
+}
 
-    triangles
+pub fn list_triangles(g: &Graph) -> HashSet<(usize, usize, usize)> {
+    let triangle_lister = TriangleLister::new(g);
+    triangle_lister.collect()
 }
 
 fn new_vertex_listing(
@@ -82,10 +127,6 @@ fn new_vertex_listing(
         }
     }
 }
-
-// 1aa. output all triangles {v, u, w} such that d(u) > K, d(w) > K and v > u > w
-// 1ab. output all triangles {v, u, w} such that d(u) > K, d(w) ≤ K and v > u
-// 1ac. output all triangles {v, u, w} such that d(u) ≤ K, d(w) > K and v > w
 
 fn edge_listing(g: &Graph, u: usize, v: usize, triangles: &mut HashSet<(usize, usize, usize)>) {
     for &w in g

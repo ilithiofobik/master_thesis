@@ -1,6 +1,5 @@
 use std::collections::HashSet;
 use std::ops::Range;
-use std::path::Iter;
 
 pub struct Graph {
     num_of_vertices: usize,

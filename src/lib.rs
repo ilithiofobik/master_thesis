@@ -23,6 +23,11 @@ pub mod triangle_listing;
 /// This module contains approximation algorithm for MPS problem using cacti algorithms.
 pub mod cacti;
 
+/// # Union find
+///
+/// This module contains a union-find data structure.
+pub mod union_find;
+
 /// # Tests
 ///
 /// This module contains tests for the library.

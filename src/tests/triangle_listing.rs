@@ -19,8 +19,9 @@ fn list_triangles_test() {
     graph.remove_edge(0, 1);
     graph.remove_edge(3, 4);
 
-    let mut triangles = new_listing(&graph)
+    let mut triangles = list_triangles(&graph)
         .into_iter()
+        .map(|(a, b, c)| sort_3tuple(a, b, c))
         .collect::<Vec<(usize, usize, usize)>>();
     triangles.sort();
 
@@ -37,7 +38,7 @@ fn list_triangles_complete_test() {
         println!("list_triangles_complete_test n = {}", n);
 
         let graph = Graph::complete(n);
-        let triangles = new_listing(&graph);
+        let triangles = list_triangles(&graph);
 
         assert_eq!(triangles.len(), binomial(n, 3));
     }
