@@ -9,3 +9,6 @@ pub mod planarity;
 
 #[cfg(test)]
 pub mod cacti;
+
+#[cfg(test)]
+pub mod triangle_listing;

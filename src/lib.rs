@@ -13,6 +13,11 @@ pub mod planarity;
 /// This module contains functions for generating random graphs.
 pub mod rand_graphs;
 
+/// # Triangle Listing
+///
+/// This module contains an algorithm for listing all triangles in a graph.
+pub mod triangle_listing;
+
 /// # Cacti
 ///
 /// This module contains approximation algorithm for MPS problem using cacti algorithms.

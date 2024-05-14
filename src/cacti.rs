@@ -2,6 +2,7 @@ extern crate ndarray;
 extern crate ndarray_linalg;
 
 use crate::graphs::Graph;
+use crate::triangle_listing::*;
 use fastrand;
 use itertools::*;
 use ndarray::Array2;
@@ -36,42 +37,6 @@ where
     } else {
         (c, b, a)
     }
-}
-
-pub fn list_triangles(g: &Graph) -> HashSet<(usize, usize, usize)> {
-    let n = g.num_of_vertices();
-    let mut triangles = HashSet::new();
-    let mut marked = HashSet::new();
-    let mut processed = vec![false; n];
-
-    let mut sorted_vertices = g.vertices().collect::<Vec<usize>>();
-    sorted_vertices.sort_by_key(|b| std::cmp::Reverse(g.degree(*b)));
-
-    while let Some(v) = sorted_vertices.pop() {
-        let v_neighbors = g.neighbors(v).unwrap();
-        for u in v_neighbors {
-            if !processed[*u] {
-                marked.insert(u);
-            }
-        }
-
-        while !marked.is_empty() {
-            let u = *marked.iter().next().unwrap();
-            marked.remove(u);
-            let u_neighbors = g.neighbors(*u).unwrap();
-
-            for w in u_neighbors {
-                if marked.contains(w) {
-                    let triangle = sort_3tuple(v, *u, *w);
-                    triangles.insert(triangle);
-                }
-            }
-        }
-
-        processed[v] = true;
-    }
-
-    triangles
 }
 
 pub fn purify_triangles(
