@@ -196,87 +196,37 @@ pub fn cacti_approximation(g: &Graph) -> Graph {
     maximum_cactus
 }
 
-// pub fn basic_cacti_approximation(g: &Graph) -> Graph {
-//     let n = g.num_of_vertices();
-//     let mut triangles = HashSet::new();
-//     let mut marked = HashSet::new();
-//     let mut processed = vec![false; n];
-//     //let mut uf = UnionFind::new(n);
-//     let mut result = Graph::empty(n);
+pub fn basic_cacti_approximation(g: &Graph) -> Graph {
+    let n = g.num_of_vertices();
+    let mut result = Graph::empty(n);
 
-//     let mut sorted_vertices = g.vertices().collect::<Vec<usize>>();
-//     sorted_vertices.sort_by_key(|b| std::cmp::Reverse(g.degree(*b)));
+    let mut union_find = UnionFind::new(n);
+    let triangle_lister = TriangleLister::new(g);
 
-//     while let Some(v) = sorted_vertices.pop() {
-//         let v_neighbors = g.neighbors(v).unwrap();
-//         for u in v_neighbors {
-//             if !processed[*u] {
-//                 marked.insert(u);
-//             }
-//         }
+    // get maximal triangular cactus
+    for (a, b, c) in triangle_lister {
+        let pairs = [(a, b), (b, c), (c, a)];
+        for (x, y) in pairs {
+            if union_find.same_set(x, y) {
+                continue;
+            }
+        }
+        for (x, y) in pairs {
+            union_find.union(x, y);
+            result.add_edge(x, y);
+        }
+    }
 
-//         while !marked.is_empty() {
-//             let u = *marked.iter().next().unwrap();
-//             marked.remove(u);
-//             let u_neighbors = g.neighbors(*u).unwrap();
+    // extend to maximal structure
+    for u in g.vertices() {
+        for &v in g.neighbors(u).unwrap() {
+            if union_find.same_set(u, v) {
+                continue;
+            }
+            union_find.union(u, v);
+            result.add_edge(u, v);
+        }
+    }
 
-//             for w in u_neighbors {
-//                 if marked.contains(w) {
-//                     if uf.same_set(v, *w) {
-//                         continue;
-//                     }
-//                     if uf.same_set(v, *u) {
-//                         continue;
-//                     }
-//                     if uf.same_set(*u, *w) {
-//                         continue;
-//                     }
-//                     uf.union(v, *u);
-//                     uf.union(v, *w);
-
-//                     let triangle = sort_3tuple(v, *u, *w);
-//                     triangles.insert(triangle);
-//                 }
-//             }
-//         }
-
-//         processed[v] = true;
-//     }
-
-//     while !new_vertices.is_empty() {
-//         // if no active then pop from new
-//         if active_vertices.is_empty() {
-//             let v = new_vertices.pop().unwrap();
-//             active_vertices.push(v);
-//         }
-
-//         let x = active_vertices.pop().unwrap();
-//         let mut x_neighbors = g.neighbors(x).unwrap();
-//     }
-
-//     let mut triangles = list_triangles(g);
-//     println!("Triangles: {:?}", triangles);
-//     println!("Purified triangles: {:?}", triangles);
-//     let indeterminates = triangles_to_indeterminates(&triangles);
-//     let mut y_mat = calc_y(&indeterminates, n);
-//     println!("Y matrix: ");
-//     print_matrix(&y_mat);
-
-//     if let Ok(mut n_mat) = y_mat.inv() {
-//         let mut tr = AlgebraicTriangleRemover {
-//             y_mat: &mut y_mat,
-//             n_mat: &mut n_mat,
-//             triangles: &mut triangles,
-//             indeterminates: &indeterminates,
-//         };
-
-//         tr.graphic_remove((0, n), (0, n), (0, n));
-//     }
-
-//     //triangles = purify_triangles(&triangles);
-
-//     // construct cactus with the remaining edges
-//     let mut maximum_cactus = triangles_to_cactus(n, &triangles);
-//     augment_cactus(g, &mut maximum_cactus);
-//     maximum_cactus
-// }
+    result
+}

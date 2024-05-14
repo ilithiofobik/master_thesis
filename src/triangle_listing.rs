@@ -22,7 +22,7 @@ where
     }
 }
 
-struct TriangleLister<'a> {
+pub struct TriangleLister<'a> {
     graph: &'a Graph,
     marked: HashSet<usize>,
     processed: Vec<bool>,
@@ -33,7 +33,7 @@ struct TriangleLister<'a> {
 }
 
 impl TriangleLister<'_> {
-    fn new(graph: &Graph) -> TriangleLister {
+    pub fn new(graph: &Graph) -> TriangleLister {
         let n = graph.num_of_vertices();
         let u = 0;
         let mut v = 0;

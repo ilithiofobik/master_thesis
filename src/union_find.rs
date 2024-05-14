@@ -1,25 +1,25 @@
 // union find for usize
-struct UnionFind {
+pub struct UnionFind {
     parent: Vec<Option<usize>>,
     size: Vec<usize>,
 }
 
 impl UnionFind {
-    fn new(n: usize) -> Self {
+    pub fn new(n: usize) -> Self {
         UnionFind {
             parent: vec![None; n],
             size: vec![1; n],
         }
     }
 
-    fn find(&mut self, mut x: usize) -> usize {
+    pub fn find(&mut self, mut x: usize) -> usize {
         while let Some(p) = self.parent[x] {
             x = p;
         }
         x
     }
 
-    fn union(&mut self, x: usize, y: usize) {
+    pub fn union(&mut self, x: usize, y: usize) {
         let x_root = self.find(x);
         let y_root = self.find(y);
 
@@ -36,7 +36,7 @@ impl UnionFind {
         }
     }
 
-    fn same_set(&mut self, x: usize, y: usize) -> bool {
+    pub fn same_set(&mut self, x: usize, y: usize) -> bool {
         self.find(x) == self.find(y)
     }
 }
