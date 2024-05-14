@@ -19,7 +19,7 @@ fn list_triangles_test() {
     graph.remove_edge(0, 1);
     graph.remove_edge(3, 4);
 
-    let mut triangles = list_triangles(&graph)
+    let mut triangles = new_listing(&graph)
         .into_iter()
         .collect::<Vec<(usize, usize, usize)>>();
     triangles.sort();

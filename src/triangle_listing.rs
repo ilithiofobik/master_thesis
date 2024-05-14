@@ -65,41 +65,54 @@ fn new_vertex_listing(
     triangles: &mut HashSet<(usize, usize, usize)>,
 ) {
     for &u in g.neighbors(v).unwrap() {
-        let u_gt_k = g.degree(v) > k;
-        for &w in g.neighbors(v).unwrap() {
-            let w_gt_k = g.degree(u) > k;
-            if g.has_edge(v, w) && (w_gt_k || u_gt_k) {
-                triangles.insert(sort_3tuple(u, v, w));
+        let du_gt_k = g.degree(v) > k;
+        for &w in g
+            .neighbors(u)
+            .unwrap()
+            .iter()
+            .filter(|&&w| g.has_edge(w, v))
+        {
+            let dw_gt_k = g.degree(u) > k;
+            let cond1 = du_gt_k && dw_gt_k && v > u && u > w;
+            let cond2 = du_gt_k && !dw_gt_k && v > u;
+            let cond3 = !du_gt_k && dw_gt_k && v > w;
+            if cond1 || cond2 || cond3 {
+                triangles.insert((w, u, v));
             }
         }
     }
 }
 
+// 1aa. output all triangles {v, u, w} such that d(u) > K, d(w) > K and v > u > w
+// 1ab. output all triangles {v, u, w} such that d(u) > K, d(w) ≤ K and v > u
+// 1ac. output all triangles {v, u, w} such that d(u) ≤ K, d(w) > K and v > w
+
 fn edge_listing(g: &Graph, u: usize, v: usize, triangles: &mut HashSet<(usize, usize, usize)>) {
-    for &w in g.neighbors(u).unwrap() {
-        if g.has_edge(v, w) {
-            if w <= v {
-                continue;
-            }
-            triangles.insert(sort_3tuple(u, v, w));
-        }
+    for &w in g
+        .neighbors(u)
+        .unwrap()
+        .iter()
+        .filter(|&&w| g.has_edge(v, w) && v < w)
+    {
+        triangles.insert((u, v, w));
     }
 }
 
 fn new_listing_with_k(g: &Graph, k: usize) -> HashSet<(usize, usize, usize)> {
     let mut triangles = HashSet::new();
 
-    for v in g.vertices() {
-        if g.degree(v) > k {
-            new_vertex_listing(g, v, k, &mut triangles);
-        }
+    for v in g.vertices().filter(|&v| g.degree(v) > k) {
+        new_vertex_listing(g, v, k, &mut triangles);
     }
 
-    for u in g.vertices() {
-        for &v in g.neighbors(u).unwrap() {
-            if u < v {
-                edge_listing(g, u, v, &mut triangles);
-            }
+    for u in g.vertices().filter(|&u| g.degree(u) <= k) {
+        for &v in g
+            .neighbors(u)
+            .unwrap()
+            .iter()
+            .filter(|&&v| g.degree(v) <= k && u < v)
+        {
+            edge_listing(g, u, v, &mut triangles);
         }
     }
 
@@ -107,7 +120,7 @@ fn new_listing_with_k(g: &Graph, k: usize) -> HashSet<(usize, usize, usize)> {
 }
 
 pub fn new_listing(g: &Graph) -> HashSet<(usize, usize, usize)> {
-    let n = g.num_of_vertices() as f64;
+    let n: f64 = g.num_of_vertices() as f64;
     let k = n.sqrt().round() as usize;
     new_listing_with_k(g, k)
 }
