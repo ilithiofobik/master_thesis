@@ -1,6 +1,3 @@
-extern crate ndarray;
-extern crate ndarray_linalg;
-
 use std::collections::HashSet;
 
 use crate::graphs::Graph;
