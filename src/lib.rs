@@ -3,6 +3,11 @@
 /// This module contains a simple graph implementation.
 pub mod graphs;
 
+/// # MPS Algorithm
+///
+/// This module contains traits for MPS algorithms.
+pub mod mps_alg;
+
 /// # Planarity
 ///
 /// This module contains a planarity testing algorithm.

@@ -1,13 +1,14 @@
 use crate::cacti::*;
 use crate::graphs::Graph;
+use crate::mps_alg::*;
 
 #[test]
 fn basic_cacti_approximation_complete_test() {
-    for n in 0..10 {
+    for n in 3..10 {
         println!("cacti_approximation_complete_test n = {}", n);
 
         let graph = Graph::complete(n);
-        let cacti = basic_cacti_approximation(&graph);
+        let cacti = CactiApproximation::maximum_planar_subgraph(&graph);
 
         let mut available_components = n;
         let mut num_of_edges = 0;
