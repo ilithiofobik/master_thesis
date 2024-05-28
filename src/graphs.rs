@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 use std::ops::Range;
 
+#[derive(Clone, Debug)]
 pub struct Graph {
     num_of_vertices: usize,
     num_of_edges: usize,

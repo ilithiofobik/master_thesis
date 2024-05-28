@@ -28,6 +28,11 @@ pub mod triangle_listing;
 /// This module contains approximation algorithm for MPS problem using cacti algorithms.
 pub mod cacti;
 
+/// # Poranen
+///
+/// This module contains approximation algorithm for MPS problem using Poranen's algorithm.
+pub mod poranen;
+
 /// # Union find
 ///
 /// This module contains a union-find data structure.
