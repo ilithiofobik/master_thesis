@@ -171,6 +171,35 @@ impl MatchMerge {
         self.apply_rule(&[(u, v), (v, w), (w, u)], &[u, v, w]);
     }
 
+    fn find_poranen_rule(&self) -> Option<(usize, usize, usize)> {
+        for x in 0..self.n {
+            let x_neighbors = self.full.neighbors(x).unwrap();
+            for &y in x_neighbors {
+                for &z in x_neighbors {
+                    if y == z {
+                        continue;
+                    }
+
+                    if !self.mps.has_edge(y, z) {
+                        continue;
+                    }
+
+                    if !self.all_different_components(&[x, y]) {
+                        continue;
+                    }
+
+                    return Some((x, y, z));
+                }
+            }
+        }
+
+        None
+    }
+
+    fn apply_poranen_rule(&mut self, u: usize, v: usize, w: usize) {
+        self.apply_rule(&[(u, v), (u, w)], &[u, v, w]);
+    }
+
     fn find_k2_rule(&self) -> Option<(usize, usize)> {
         for x in 0..self.n {
             let x_neighbors = self.full.neighbors(x).unwrap();
@@ -236,6 +265,31 @@ pub fn my_mps(g: &Graph) -> Graph {
 
     while let Some((u, v, w)) = mm.find_k3_rule() {
         mm.apply_k3_rule(u, v, w);
+    }
+
+    while let Some((u, v)) = mm.find_k2_rule() {
+        mm.apply_k2_rule(u, v);
+    }
+
+    mm.mps
+}
+
+pub fn poranen_mps(g: &Graph) -> Graph {
+    let mut mm = MatchMerge::new(g);
+    let mut found = true;
+
+    while found {
+        found = false;
+
+        while let Some((x, y, z)) = mm.find_poranen_rule() {
+            mm.apply_poranen_rule(x, y, z);
+            found = true;
+        }
+
+        if let Some((u, v, w)) = mm.find_k3_rule() {
+            mm.apply_k3_rule(u, v, w);
+            found = true;
+        }
     }
 
     while let Some((u, v)) = mm.find_k2_rule() {
