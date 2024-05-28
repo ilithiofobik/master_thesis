@@ -35,3 +35,13 @@ fn schmid_d4_mps_complete_test() {
         assert_eq!(mps.num_of_edges(), m);
     }
 }
+
+#[test]
+fn my_mps_complete_test() {
+    for (n, m) in [(3, 3), (4, 5), (5, 7), (6, 8), (7, 10), (8, 12), (9, 14)] {
+        let graph = Graph::complete(n);
+        let mps = my_mps(&graph);
+        assert_eq!(mps.num_of_vertices(), n);
+        assert_eq!(mps.num_of_edges(), m);
+    }
+}

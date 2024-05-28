@@ -62,6 +62,55 @@ impl MatchMerge {
         }
     }
 
+    fn apply_rule(&mut self, edges: &[(usize, usize)], vertices: &[usize]) {
+        for &(u, v) in edges {
+            self.mps.add_edge(u, v);
+            self.full.remove_edge(u, v);
+        }
+
+        self.connect_components(vertices);
+    }
+
+    fn find_my_rule(&self) -> Option<(usize, usize, usize, usize, usize)> {
+        for x in 0..self.n {
+            let x_neighbors = self.full.neighbors(x).unwrap();
+            for &y in x_neighbors {
+                for &z in x_neighbors {
+                    if y == z || !self.full.has_edge(y, z) {
+                        continue;
+                    }
+
+                    for &w in x_neighbors {
+                        if w == y || w == z || !self.full.has_edge(z, w) {
+                            continue;
+                        }
+
+                        for &t in x_neighbors {
+                            if t == y || t == z || t == w || !self.full.has_edge(w, t) {
+                                continue;
+                            }
+
+                            if !self.all_different_components(&[x, y, z, w, t]) {
+                                continue;
+                            }
+
+                            return Some((x, y, z, w, t));
+                        }
+                    }
+                }
+            }
+        }
+
+        None
+    }
+
+    fn apply_my_rule(&mut self, x: usize, y: usize, z: usize, w: usize, t: usize) {
+        self.apply_rule(
+            &[(x, y), (x, z), (x, w), (x, t), (y, z), (z, w), (w, t)],
+            &[x, y, z, w, t],
+        );
+    }
+
     fn find_d4_rule(&self) -> Option<(usize, usize, usize, usize)> {
         for x in 0..self.n {
             let x_neighbors = self.full.neighbors(x).unwrap();
@@ -87,15 +136,6 @@ impl MatchMerge {
         }
 
         None
-    }
-
-    fn apply_rule(&mut self, edges: &[(usize, usize)], vertices: &[usize]) {
-        for &(u, v) in edges {
-            self.mps.add_edge(u, v);
-            self.full.remove_edge(u, v);
-        }
-
-        self.connect_components(vertices);
     }
 
     fn apply_d4_rule(&mut self, x: usize, y: usize, z: usize, w: usize) {
@@ -167,6 +207,28 @@ pub fn calinescu_basic_mps(g: &Graph) -> Graph {
 
 pub fn schmid_d4_mps(g: &Graph) -> Graph {
     let mut mm = MatchMerge::new(g);
+
+    while let Some((x, y, z, w)) = mm.find_d4_rule() {
+        mm.apply_d4_rule(x, y, z, w);
+    }
+
+    while let Some((u, v, w)) = mm.find_k3_rule() {
+        mm.apply_k3_rule(u, v, w);
+    }
+
+    while let Some((u, v)) = mm.find_k2_rule() {
+        mm.apply_k2_rule(u, v);
+    }
+
+    mm.mps
+}
+
+pub fn my_mps(g: &Graph) -> Graph {
+    let mut mm = MatchMerge::new(g);
+
+    while let Some((x, y, z, w, t)) = mm.find_my_rule() {
+        mm.apply_my_rule(x, y, z, w, t);
+    }
 
     while let Some((x, y, z, w)) = mm.find_d4_rule() {
         mm.apply_d4_rule(x, y, z, w);
