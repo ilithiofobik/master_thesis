@@ -30,7 +30,7 @@ pub fn schnyder_mps(g: &Graph) -> Graph {
         }
     }
 
-    // a_i,e,v has value 1 iff for all u in e u <_i v
+    // a_i,v,e has value 1 iff for all u in e u <_i v
     for i in 0..3 {
         for v in 0..n {
             for &e in edges.iter() {
@@ -58,12 +58,75 @@ pub fn schnyder_mps(g: &Graph) -> Graph {
         problem = problem.with(constraint!(edges_sum <= bound));
     }
 
+    // 2a
+    for e in edges.iter() {
+        for v in 0..n {
+            if v == e.0 || v == e.1 {
+                continue;
+            }
+            problem = problem.with(constraint!(s[e] <= a[0][v][e] + a[1][v][e] + a[2][v][e]));
+        }
+    }
+
+    // 2b
+    for i in 0..3 {
+        for e in edges.iter() {
+            for u in [e.0, e.1] {
+                for v in 0..n {
+                    if v == e.0 || v == e.1 {
+                        continue;
+                    }
+                    problem = problem.with(constraint!(a[i][v][e] <= t[i][u][v]));
+                }
+            }
+        }
+    }
+
+    // 2c
+    for u in 0..n {
+        for v in 0..n {
+            if u == v {
+                continue;
+            }
+            problem = problem.with(constraint!(t[0][u][v] + t[1][u][v] + t[2][u][v] <= 2.1));
+        }
+    }
+
+    // 2d
+    for i in 0..3 {
+        for u in 0..n {
+            for v in 0..n {
+                if u == v {
+                    continue;
+                }
+                for w in 0..n {
+                    if u == w || v == w {
+                        continue;
+                    }
+                    problem = problem.with(constraint!(t[i][u][v] + t[i][v][w] - 1 <= t[i][u][w]));
+                }
+            }
+        }
+    }
+
+    // 2e
+    for i in 0..3 {
+        for u in 0..n {
+            for v in 0..n {
+                if u == v {
+                    continue;
+                }
+                problem = problem.with(constraint!(t[i][u][v] + t[i][v][u] == 1.0));
+            }
+        }
+    }
+
     let solution = problem.solve().unwrap();
 
     let mut mps = Graph::empty(n);
 
     for &e in edges.iter() {
-        if solution.value(s[&e]) == 1.0 {
+        if solution.value(s[&e]) >= 0.5 {
             mps.add_edge(e.0, e.1);
         }
     }
