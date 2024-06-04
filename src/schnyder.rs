@@ -1,54 +1,59 @@
+use std::collections::HashMap;
+
 use crate::graphs::Graph;
 use good_lp::*;
 
-pub fn schnyder_mps(g: &Graph) {
+pub fn schnyder_mps(g: &Graph) -> Graph {
+    let mut vars = ProblemVariables::new();
+
     let n = g.num_of_vertices();
     let m = g.num_of_edges();
+    let edges = g.all_edges();
 
-    let mut lp = LinearProgram::new("SchnyderMPS");
+    let mut s = HashMap::with_capacity(m);
+    let mut t = vec![vec![Vec::with_capacity(n); n]; 3];
+    let mut a = vec![vec![HashMap::with_capacity(m); n]; 3];
 
-    let mut x = vec![];
-    for i in 0..n {
-        x.push(lp.add_var("x", 0.0, 1.0));
+    // s_e = 1 iff edge e is in the mps
+    for &e in edges.iter() {
+        let s_e = vars.add(variable().binary());
+        s.insert(e, s_e);
     }
 
-    let mut y = vec![];
-    for i in 0..m {
-        y.push(lp.add_var("y", 0.0, 1.0));
-    }
-
-    for i in 0..n {
-        let mut expr = LpExpression::from(x[i]);
-        for j in 0..m {
-            if g.edge(i, j) {
-                expr = expr + LpExpression::from(y[j]);
+    // t_i,u,v has value 1 iff u <_i v
+    for i in 0..3 {
+        for u in 0..n {
+            for v in 0..n {
+                let t_i_u_v = vars.add(variable().binary());
+                t[i][u].push(t_i_u_v);
             }
         }
-        lp.add_constraint(expr, GREATER_EQ, 1.0);
     }
 
-    for j in 0..m {
-        let mut expr = LpExpression::from(y[j]);
-        for i in 0..n {
-            if g.edge(i, j) {
-                expr = expr + LpExpression::from(x[i]);
+    // a_i,e,v has value 1 iff for all u in e u <_i v
+    for i in 0..3 {
+        for v in 0..n {
+            for &e in edges.iter() {
+                let a_i_v_e = vars.add(variable().binary());
+                a[i][v].insert(e, a_i_v_e);
             }
         }
-        lp.add_constraint(expr, LESS_EQ, 1.0);
     }
 
-    lp.set_objective(
-        LpObjective::Maximize,
-        LpExpression::from(x.iter().sum::<LpExpression>() + y.iter().sum::<LpExpression>()),
-    );
-
-    let solution = lp.solve().unwrap();
-
-    for i in 0..n {
-        println!("x[{}] = {}", i, solution[x[i]]);
+    let mut objective = Expression::from(0);
+    for e in edges.iter() {
+        objective += s[e];
     }
 
-    for j in 0..m {
-        println!("y[{}] = {}", j, solution[y[j]]);
+    let model = vars.maximise(objective).using(highs).solve().unwrap();
+
+    let mut mps = Graph::empty(n);
+
+    for &e in edges.iter() {
+        if model.value(s[&e]) == 1.0 {
+            mps.add_edge(e.0, e.1);
+        }
     }
+
+    mps
 }
