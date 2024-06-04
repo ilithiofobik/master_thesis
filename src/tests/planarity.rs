@@ -55,19 +55,19 @@ fn k23_test() {
     assert!(is_planar(&graph));
 }
 
-// #[test]
-fn k33_test() {
-    let graph = Graph::bipartite_complete(3, 3);
-    graph.print_edges();
-    assert!(!is_planar(&graph));
-}
+// // #[test]
+// fn k33_test() {
+//     let graph = Graph::bipartite_complete(3, 3);
+//     graph.print_edges();
+//     assert!(!is_planar(&graph));
+// }
 
-// #[test]
-fn k34_test() {
-    let graph = Graph::bipartite_complete(3, 4);
-    graph.print_edges();
-    assert!(!is_planar(&graph));
-}
+// // #[test]
+// fn k34_test() {
+//     let graph = Graph::bipartite_complete(3, 4);
+//     graph.print_edges();
+//     assert!(!is_planar(&graph));
+// }
 
 #[test]
 fn k33_minus_edge_test() {

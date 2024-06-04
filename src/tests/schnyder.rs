@@ -24,9 +24,10 @@ fn goodlptest() {
 
 #[test]
 fn schnyder_mps_test() {
-    let mut graph = Graph::complete(5);
-
-    let mps = schnyder_mps(&graph);
-    assert_eq!(mps.num_of_vertices(), 5);
-    assert_eq!(mps.num_of_edges(), 10);
+    for n in 3..10 {
+        let graph = Graph::complete(n);
+        let mps = schnyder_mps(&graph);
+        assert_eq!(mps.num_of_vertices(), n);
+        assert_eq!(mps.num_of_edges(), 3 * n - 6);
+    }
 }

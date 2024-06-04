@@ -45,12 +45,25 @@ pub fn schnyder_mps(g: &Graph) -> Graph {
         objective += s[e];
     }
 
-    let model = vars.maximise(objective).using(highs).solve().unwrap();
+    let mut problem = vars.maximise(objective).using(highs);
+
+    // Euler criterion
+    if n > 2 {
+        let mut edges_sum = Expression::from(0);
+        for e in edges.iter() {
+            let (u, v) = e;
+            edges_sum += s[e];
+        }
+        let bound = Expression::from((3 * n - 6) as i32);
+        problem = problem.with(constraint!(edges_sum <= bound));
+    }
+
+    let solution = problem.solve().unwrap();
 
     let mut mps = Graph::empty(n);
 
     for &e in edges.iter() {
-        if model.value(s[&e]) == 1.0 {
+        if solution.value(s[&e]) == 1.0 {
             mps.add_edge(e.0, e.1);
         }
     }
