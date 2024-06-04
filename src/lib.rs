@@ -33,6 +33,16 @@ pub mod cacti;
 /// This module contains approximation algorithm for MPS problem using Poranen's algorithm.
 pub mod poranen;
 
+/// # LR Coloring
+///
+/// This module contains an exact algorithm for MPS based on left-right coloring.
+pub mod lr_coloring;
+
+/// # Schnyder
+///
+/// This module contains an exact algorithm for MPS based the Schnyder poset characterization of planar graphs.
+pub mod schnyder;
+
 /// # Union find
 ///
 /// This module contains a union-find data structure.

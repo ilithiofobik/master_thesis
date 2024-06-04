@@ -15,3 +15,6 @@ pub mod poranen;
 
 #[cfg(test)]
 pub mod triangle_listing;
+
+#[cfg(test)]
+pub mod schnyder;

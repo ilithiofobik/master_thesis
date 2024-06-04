@@ -172,6 +172,16 @@ impl Graph {
         }
     }
 
+    pub fn all_edges(&self) -> Vec<(usize, usize)> {
+        let mut edges = Vec::new();
+        for (from, tos) in self.neighbors.iter().enumerate() {
+            for to in tos.iter().filter(|&to| from < *to) {
+                edges.push((from, *to));
+            }
+        }
+        edges
+    }
+
     pub fn print_edges(&self) {
         println!("Edges:");
         for (from, tos) in self.neighbors.iter().enumerate() {
