@@ -1,7 +1,7 @@
 use crate::facial_walks::facial_walks_mps;
 use crate::graphs::Graph;
 
-//#[test]
+#[test]
 fn facial_walks_mps_test() {
     for n in 3..8 {
         let graph = Graph::complete(n);

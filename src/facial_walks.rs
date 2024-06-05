@@ -3,6 +3,14 @@ use std::collections::HashMap;
 use crate::graphs::Graph;
 use good_lp::*;
 
+fn sum_s_over_e(edges: &Vec<(usize, usize)>, s: &HashMap<(usize, usize), Variable>) -> Expression {
+    edges.iter().fold(Expression::from(0), |acc, e| acc + s[e])
+}
+
+fn sum_x_over_i(x: &Vec<Variable>) -> Expression {
+    x.iter().fold(Expression::from(0), |acc, x_i| acc + x_i)
+}
+
 pub fn facial_walks_mps(g: &Graph) -> Graph {
     let mut vars = ProblemVariables::new();
 
@@ -51,11 +59,7 @@ pub fn facial_walks_mps(g: &Graph) -> Graph {
         }
     }
 
-    let mut objective = Expression::from(0);
-    for e in edges.iter() {
-        objective += s[e];
-    }
-
+    let objective = sum_s_over_e(&edges, &s);
     let mut problem = vars.maximise(objective).using(highs);
 
     // Euler criterion
@@ -66,6 +70,16 @@ pub fn facial_walks_mps(g: &Graph) -> Graph {
         }
         let bound = Expression::from((3 * n - 6) as i32);
         problem = problem.with(constraint!(edges_sum <= bound));
+    }
+
+    // 1a
+    {
+        let n = Expression::from(n as i32);
+        let x_f = sum_x_over_i(&x);
+        let two = Expression::from(2);
+        let sum_of_s = sum_s_over_e(&edges, &s);
+
+        problem = problem.with(constraint!(n + x_f == two + sum_of_s));
     }
 
     let solution = problem.solve().unwrap();
