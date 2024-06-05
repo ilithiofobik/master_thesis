@@ -25,6 +25,21 @@ fn sum_c_over_faces_arcs(
     result
 }
 
+fn sum_p_over_faces_arcs(
+    p: &HashMap<(usize, usize, usize), Variable>,
+    v: usize,
+    us: &[usize],
+    ws: &[usize],
+) -> Expression {
+    let mut result = Expression::from(0);
+    for &u in us.iter() {
+        for &w in ws.iter() {
+            result += p[&(v, u, w)];
+        }
+    }
+    result
+}
+
 fn edge(arc: (usize, usize)) -> (usize, usize) {
     if arc.0 < arc.1 {
         arc
@@ -78,7 +93,7 @@ pub fn facial_walks_mps(g: &Graph) -> Graph {
                     continue;
                 }
                 let p_v_u_w = vars.add(variable().binary());
-                p.insert((v, u, w), p_v_u_w);
+                p.insert((v, *u, *w), p_v_u_w);
             }
         }
     }
@@ -129,6 +144,43 @@ pub fn facial_walks_mps(g: &Graph) -> Graph {
         problem = problem.with(constraint!(
             sum_c_over_faces_arcs(&c, &all_faces, &[a]) == s[&edge(a)]
         ));
+    }
+
+    // 1g
+    for v in 0..n {
+        let neighbors = g.neighbors(v).unwrap();
+        let in_arcs = neighbors
+            .iter()
+            .cloned()
+            .map(|u| (u, v))
+            .collect::<Vec<_>>();
+        let out_arcs = neighbors
+            .iter()
+            .cloned()
+            .map(|u| (v, u))
+            .collect::<Vec<_>>();
+        for &i in all_faces.iter() {
+            let in_c = sum_c_over_faces_arcs(&c, &[i], &in_arcs);
+            let out_c = sum_c_over_faces_arcs(&c, &[i], &out_arcs);
+            problem = problem.with(constraint!(in_c == out_c));
+        }
+    }
+
+    // 1h, 1i
+    for v in 0..n {
+        let neighbors = g.neighbors(v).unwrap();
+        for &u in neighbors.iter() {
+            for &w in neighbors.iter() {
+                if u == w {
+                    continue;
+                }
+                for &i in all_faces.iter() {
+                    problem = problem.with(constraint!(
+                        c[i][&(v, u)] + c[i][&(u, w)] - 1 <= c[i][&(v, w)]
+                    ));
+                }
+            }
+        }
     }
 
     let solution = problem.solve().unwrap();
