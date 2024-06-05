@@ -122,6 +122,13 @@ pub fn lr_coloring_mps(g: &Graph) -> Graph {
         problem = problem.with(constraint!(l[v][v] == 1));
     }
 
+    // 3i,j,k
+    for &e in edges.iter() {
+        problem = problem.with(constraint!(s[&e] <= l[e.0][e.1] + l[e.1][e.0]));
+        problem = problem.with(constraint!(t[&e] + t[&swap(e)] + r[&e] <= 1));
+        problem = problem.with(constraint!(r[&e] <= s[&e]));
+    }
+
     let solution = problem.solve().unwrap();
 
     let mut mps = Graph::empty(n);
