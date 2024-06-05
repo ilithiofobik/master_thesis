@@ -11,6 +11,20 @@ fn sum_x_over_i(x: &Vec<Variable>) -> Expression {
     x.iter().fold(Expression::from(0), |acc, x_i| acc + x_i)
 }
 
+fn sum_c_over_faces_arcs(
+    c: &Vec<HashMap<(usize, usize), Variable>>,
+    faces: &[usize],
+    arcs: &[(usize, usize)],
+) -> Expression {
+    let mut result = Expression::from(0);
+    for i in faces.iter() {
+        for a in arcs.iter() {
+            result += c[*i][a];
+        }
+    }
+    result
+}
+
 pub fn facial_walks_mps(g: &Graph) -> Graph {
     let mut vars = ProblemVariables::new();
 
@@ -38,7 +52,7 @@ pub fn facial_walks_mps(g: &Graph) -> Graph {
     }
 
     // c_i,a has value 1 iff arc a bounds face i: traversing i in clockwise order visits e(a) in the orientation of a
-    for a in arcs {
+    for &a in arcs.iter() {
         for i in 0..f_max {
             let c_i_a = vars.add(variable().binary());
             c[i].insert(a, c_i_a);
@@ -80,6 +94,17 @@ pub fn facial_walks_mps(g: &Graph) -> Graph {
         let sum_of_s = sum_s_over_e(&edges, &s);
 
         problem = problem.with(constraint!(n + x_f == two + sum_of_s));
+    }
+
+    // 1c
+    for i in 0..f_max - 1 {
+        problem = problem.with(constraint!(x[i] >= x[i + 1]));
+    }
+
+    // 1d
+    for i in 0..f_max {
+        let arcs_sum = sum_c_over_faces_arcs(&c, &[i], &arcs);
+        problem = problem.with(constraint!(3 * x[i] <= arcs_sum));
     }
 
     let solution = problem.solve().unwrap();
