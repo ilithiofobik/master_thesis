@@ -25,14 +25,24 @@ fn sum_c_over_faces_arcs(
     result
 }
 
+fn edge(arc: (usize, usize)) -> (usize, usize) {
+    if arc.0 < arc.1 {
+        arc
+    } else {
+        (arc.1, arc.0)
+    }
+}
+
 pub fn facial_walks_mps(g: &Graph) -> Graph {
     let mut vars = ProblemVariables::new();
 
     let n = g.num_of_vertices();
     let m = g.num_of_edges();
     let f_max = 2 + m - n;
+
     let edges = g.all_edges();
     let arcs = g.all_arcs();
+    let all_faces = (0..f_max).collect::<Vec<usize>>();
 
     let mut s = HashMap::with_capacity(m);
     let mut x = Vec::with_capacity(f_max);
@@ -46,7 +56,7 @@ pub fn facial_walks_mps(g: &Graph) -> Graph {
     }
 
     // x_i has value 1 iff face i exists
-    for i in 0..f_max {
+    for i in all_faces.iter() {
         let x_i = vars.add(variable().binary());
         x.push(x_i);
     }
@@ -105,6 +115,20 @@ pub fn facial_walks_mps(g: &Graph) -> Graph {
     for i in 0..f_max {
         let arcs_sum = sum_c_over_faces_arcs(&c, &[i], &arcs);
         problem = problem.with(constraint!(3 * x[i] <= arcs_sum));
+    }
+
+    // 1e
+    for i in 0..f_max {
+        for &a in arcs.iter() {
+            problem = problem.with(constraint!(c[i][&a] <= x[i]));
+        }
+    }
+
+    // 1f
+    for &a in arcs.iter() {
+        problem = problem.with(constraint!(
+            sum_c_over_faces_arcs(&c, &all_faces, &[a]) == s[&edge(a)]
+        ));
     }
 
     let solution = problem.solve().unwrap();
