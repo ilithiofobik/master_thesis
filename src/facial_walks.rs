@@ -25,7 +25,7 @@ fn sum_c_over_faces_arcs(
     result
 }
 
-fn sum_p_over_faces_arcs(
+fn sum_p_over_vertices(
     p: &HashMap<(usize, usize, usize), Variable>,
     v: usize,
     us: &[usize],
@@ -34,6 +34,9 @@ fn sum_p_over_faces_arcs(
     let mut result = Expression::from(0);
     for &u in us.iter() {
         for &w in ws.iter() {
+            if u == w {
+                continue;
+            }
             result += p[&(v, u, w)];
         }
     }
@@ -71,7 +74,7 @@ pub fn facial_walks_mps(g: &Graph) -> Graph {
     }
 
     // x_i has value 1 iff face i exists
-    for i in all_faces.iter() {
+    for _i in all_faces.iter() {
         let x_i = vars.add(variable().binary());
         x.push(x_i);
     }
@@ -113,12 +116,10 @@ pub fn facial_walks_mps(g: &Graph) -> Graph {
 
     // 1a
     {
-        let n = Expression::from(n as i32);
         let x_f = sum_x_over_i(&x);
-        let two = Expression::from(2);
         let sum_of_s = sum_s_over_e(&edges, &s);
 
-        problem = problem.with(constraint!(n + x_f == two + sum_of_s));
+        problem = problem.with(constraint!(n as i32 + x_f == 2 + sum_of_s));
     }
 
     // 1c
@@ -176,10 +177,31 @@ pub fn facial_walks_mps(g: &Graph) -> Graph {
                 }
                 for &i in all_faces.iter() {
                     problem = problem.with(constraint!(
-                        c[i][&(v, u)] + c[i][&(u, w)] - 1 <= c[i][&(v, w)]
+                        c[i][&(v, w)] >= c[i][&(u, v)] + p[&(v, u, w)] - 1
+                    ));
+                    problem = problem.with(constraint!(
+                        c[i][&(u, v)] >= c[i][&(v, w)] + p[&(v, u, w)] - 1
                     ));
                 }
             }
+        }
+    }
+
+    // 1j, 1k
+    for v in 0..n {
+        let neighbors = g
+            .neighbors(v)
+            .unwrap()
+            .clone()
+            .into_iter()
+            .collect::<Vec<usize>>();
+
+        for &u in neighbors.iter() {
+            let pvun = sum_p_over_vertices(&p, v, &[u], &neighbors);
+            let pvnu = sum_p_over_vertices(&p, v, &neighbors, &[u]);
+            let edge = edge((v, u));
+            problem = problem.with(constraint!(pvun == s[&edge]));
+            problem = problem.with(constraint!(pvnu == s[&edge]));
         }
     }
 
