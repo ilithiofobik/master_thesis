@@ -92,7 +92,7 @@ pub fn lr_coloring_mps(g: &Graph) -> Graph {
         let neighbors = g.neighbors(u).unwrap();
 
         for (i, &v) in neighbors.iter().enumerate() {
-            for &w in neighbors.iter().skip(i) {
+            for &w in neighbors.iter().skip(i + 1) {
                 problem = problem.with(constraint!(
                     l[v][w] + l[w][v] + t[&(u, v)] + t[&(u, w)] <= 2
                 ));
@@ -102,20 +102,24 @@ pub fn lr_coloring_mps(g: &Graph) -> Graph {
 
     // 3 e,f
     for u in 0..n {
-        for v in 0..n {
-            if u == v {
-                continue;
-            }
-
-            for w in 0..n {
-                if u == w || v == w {
-                    continue;
-                }
-
+        for v in u + 1..n {
+            for w in v + 1..n {
                 problem = problem.with(constraint!(l[u][w] + l[v][w] <= 1 + l[u][v] + l[v][u]));
                 problem = problem.with(constraint!(l[u][v] + l[v][w] <= l[u][w] + 1));
             }
         }
+    }
+
+    // 3g
+    for u in 0..n {
+        for v in u + 1..n {
+            problem = problem.with(constraint!(l[u][v] + l[v][u] <= 1));
+        }
+    }
+
+    // 3h
+    for v in 0..n {
+        problem = problem.with(constraint!(l[v][v] == 1));
     }
 
     let solution = problem.solve().unwrap();
