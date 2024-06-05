@@ -100,6 +100,24 @@ pub fn lr_coloring_mps(g: &Graph) -> Graph {
         }
     }
 
+    // 3 e,f
+    for u in 0..n {
+        for v in 0..n {
+            if u == v {
+                continue;
+            }
+
+            for w in 0..n {
+                if u == w || v == w {
+                    continue;
+                }
+
+                problem = problem.with(constraint!(l[u][w] + l[v][w] <= 1 + l[u][v] + l[v][u]));
+                problem = problem.with(constraint!(l[u][v] + l[v][w] <= l[u][w] + 1));
+            }
+        }
+    }
+
     let solution = problem.solve().unwrap();
 
     let mut mps = Graph::empty(n);
