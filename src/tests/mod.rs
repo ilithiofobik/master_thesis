@@ -20,4 +20,4 @@ pub mod triangle_listing;
 pub mod schnyder;
 
 #[cfg(test)]
-pub mod lr_coloring;
+pub mod facial_walks;

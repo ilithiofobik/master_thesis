@@ -205,6 +205,16 @@ impl Graph {
         edges
     }
 
+    pub fn all_arcs(&self) -> Vec<(usize, usize)> {
+        let mut arcs = Vec::new();
+        for (from, tos) in self.neighbors.iter().enumerate() {
+            for to in tos.iter() {
+                arcs.push((from, *to));
+            }
+        }
+        arcs
+    }
+
     pub fn print_edges(&self) {
         println!("Edges:");
         for (from, tos) in self.neighbors.iter().enumerate() {

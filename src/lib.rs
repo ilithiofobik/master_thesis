@@ -33,10 +33,10 @@ pub mod cacti;
 /// This module contains approximation algorithm for MPS problem using Poranen's algorithm.
 pub mod poranen;
 
-/// # LR Coloring
+/// # Facial walks
 ///
-/// This module contains an exact algorithm for MPS based on left-right coloring.
-pub mod lr_coloring;
+/// This module contains an exact algorithm for MPS based on facial walks.
+pub mod facial_walks;
 
 /// # Schnyder
 ///
