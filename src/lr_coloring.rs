@@ -81,9 +81,23 @@ pub fn lr_coloring_mps(g: &Graph) -> Graph {
     let arcs_bound = Expression::from((n - 1) as i32);
     problem = problem.with(constraint!(arcs_sum == arcs_bound));
 
-    // 3b
+    // 3b, 3c
     for d in arcs.iter() {
         problem = problem.with(constraint!(t[d] <= s[&edge(*d)]));
+        problem = problem.with(constraint!(t[d] <= l[d.0][d.1]));
+    }
+
+    // 3d
+    for u in 0..n {
+        let neighbors = g.neighbors(u).unwrap();
+
+        for (i, &v) in neighbors.iter().enumerate() {
+            for &w in neighbors.iter().skip(i) {
+                problem = problem.with(constraint!(
+                    l[v][w] + l[w][v] + t[&(u, v)] + t[&(u, w)] <= 2
+                ));
+            }
+        }
     }
 
     let solution = problem.solve().unwrap();
