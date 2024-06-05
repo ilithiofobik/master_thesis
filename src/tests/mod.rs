@@ -18,3 +18,6 @@ pub mod triangle_listing;
 
 #[cfg(test)]
 pub mod schnyder;
+
+#[cfg(test)]
+pub mod lr_coloring;
