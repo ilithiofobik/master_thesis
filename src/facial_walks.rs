@@ -43,6 +43,25 @@ fn sum_p_over_vertices(
     result
 }
 
+fn double_power_set(elements: &[usize]) -> Vec<(Vec<usize>, Vec<usize>)> {
+    let mut result = Vec::new();
+    let n = elements.len();
+    let num_of_partitions = (1 << n) - 1;
+    for i in 1..num_of_partitions {
+        let mut subset0 = Vec::new();
+        let mut subset1 = Vec::new();
+        for j in 0..n {
+            if i & (1 << j) == 0 {
+                subset0.push(elements[j]);
+            } else {
+                subset1.push(elements[j]);
+            }
+        }
+        result.push((subset0, subset1));
+    }
+    result
+}
+
 fn edge(arc: (usize, usize)) -> (usize, usize) {
     if arc.0 < arc.1 {
         arc
@@ -202,6 +221,27 @@ pub fn facial_walks_mps(g: &Graph) -> Graph {
             let edge = edge((v, u));
             problem = problem.with(constraint!(pvun == s[&edge]));
             problem = problem.with(constraint!(pvnu == s[&edge]));
+        }
+    }
+
+    // 1l
+    for v in 0..n {
+        let neighbors = g
+            .neighbors(v)
+            .unwrap()
+            .clone()
+            .into_iter()
+            .collect::<Vec<usize>>();
+        let double_power_set = double_power_set(&neighbors);
+        for (u, nu) in double_power_set.iter() {
+            let pvun = sum_p_over_vertices(&p, v, &u, &nu);
+            for &u_i in u {
+                for &nu_i in nu {
+                    problem = problem.with(constraint!(
+                        pvun.clone() >= s[&edge((v, u_i))] + s[&edge((v, nu_i))] - 1
+                    ));
+                }
+            }
         }
     }
 

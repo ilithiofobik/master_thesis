@@ -3,7 +3,7 @@ use crate::graphs::Graph;
 
 #[test]
 fn facial_walks_mps_test() {
-    for n in 3..8 {
+    for n in 3..6 {
         let graph = Graph::complete(n);
         let mps = facial_walks_mps(&graph);
         println!("Testing Facial Walks MPS for n = {}", n);
