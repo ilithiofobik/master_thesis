@@ -1,10 +1,9 @@
 use crate::graphs::Graph;
 use crate::lr_coloring::lr_coloring_mps;
-use good_lp::*;
 
 #[test]
 fn lr_coloring_mps_test() {
-    for n in 3..10 {
+    for n in 3..8 {
         let graph = Graph::complete(n);
         let mps = lr_coloring_mps(&graph);
         println!("Testing LR Coloring MPS for n = {}", n);

@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::ops::Add;
 use std::ops::Range;
 
 #[derive(Clone, Debug)]
@@ -18,6 +19,28 @@ pub struct DirectedGraph {
 impl Default for Graph {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl Add for Graph {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        let mut graph = self.clone();
+        let n1 = self.num_of_vertices;
+        let n2 = other.num_of_vertices;
+
+        for _ in 0..n2 {
+            graph.add_vertex();
+        }
+
+        for (from, tos) in other.neighbors.iter().enumerate() {
+            for to in tos.iter() {
+                graph.add_edge(from + n1, *to + n1);
+            }
+        }
+
+        graph
     }
 }
 

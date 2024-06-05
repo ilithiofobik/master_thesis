@@ -23,7 +23,7 @@ pub fn schnyder_mps(g: &Graph) -> Graph {
     // t_i,u,v has value 1 iff u <_i v
     for i in 0..3 {
         for u in 0..n {
-            for v in 0..n {
+            for _v in 0..n {
                 let t_i_u_v = vars.add(variable().binary());
                 t[i][u].push(t_i_u_v);
             }
@@ -51,7 +51,6 @@ pub fn schnyder_mps(g: &Graph) -> Graph {
     if n > 2 {
         let mut edges_sum = Expression::from(0);
         for e in edges.iter() {
-            let (u, v) = e;
             edges_sum += s[e];
         }
         let bound = Expression::from((3 * n - 6) as i32);

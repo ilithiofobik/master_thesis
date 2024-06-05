@@ -50,7 +50,7 @@ pub fn lr_coloring_mps(g: &Graph) -> Graph {
 
     // l_u,v has value 1 iff node u lies on the path from the root to node v in T
     for u in 0..n {
-        for v in 0..n {
+        for _v in 0..n {
             let l_u_v = vars.add(variable().binary());
             l[u].push(l_u_v);
         }
@@ -67,7 +67,6 @@ pub fn lr_coloring_mps(g: &Graph) -> Graph {
     if n > 2 {
         let mut edges_sum = Expression::from(0);
         for e in edges.iter() {
-            let (u, v) = e;
             edges_sum += s[e];
         }
         let bound = Expression::from((3 * n - 6) as i32);
@@ -81,6 +80,11 @@ pub fn lr_coloring_mps(g: &Graph) -> Graph {
     }
     let arcs_bound = Expression::from((n - 1) as i32);
     problem = problem.with(constraint!(arcs_sum == arcs_bound));
+
+    // 3b
+    for d in arcs.iter() {
+        problem = problem.with(constraint!(t[d] <= s[&edge(*d)]));
+    }
 
     let solution = problem.solve().unwrap();
 
