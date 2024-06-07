@@ -61,18 +61,24 @@ fn is_graphical_i_j(d_seq: &mut [usize], i: usize, j: usize) -> bool {
     result
 }
 
-fn _get_rand_neighbour(ppb_sum: usize, graphical_candidates: &[&usize], d: &[usize]) -> usize {
-    let r = fastrand::usize(0..ppb_sum);
-    let mut sum = 0;
-    let mut j_idx = 0;
-
-    while sum <= r {
-        sum += d[*graphical_candidates[j_idx]];
-        j_idx += 1;
+fn pop_minimum(d: &[usize], indices: &mut Vec<usize>) -> Option<usize> {
+    if indices.is_empty() {
+        return None;
     }
-    j_idx -= 1;
 
-    *graphical_candidates[j_idx]
+    let n = indices.len();
+    let mut min = d[indices[0]];
+    let mut min_index = 0;
+
+    for i in 1..n {
+        if d[indices[i]] < min {
+            min = d[indices[i]];
+            min_index = i;
+        }
+    }
+
+    indices.swap(min_index, n - 1);
+    indices.pop()
 }
 
 // Based on "A Sequential Importance Sampling Algorithm for Generating Random Graphs with Prescribed Degrees"
@@ -90,9 +96,8 @@ pub fn bliztstein_generation(d_in: &[usize]) -> Result<Graph, &'static str> {
         .enumerate()
         .filter_map(|(i, &di)| if di > 0 { Some(i) } else { None })
         .collect::<Vec<usize>>();
-    indices_to_process.sort_by(|a, b| d[*b].cmp(&d[*a]));
 
-    while let Some(i) = indices_to_process.pop() {
+    while let Some(i) = pop_minimum(&d, &mut indices_to_process) {
         let mut not_having_edge = indices_to_process.clone();
 
         while d[i] > 0 {
@@ -124,8 +129,6 @@ pub fn bliztstein_generation(d_in: &[usize]) -> Result<Graph, &'static str> {
 
             if d[j] == 0 {
                 indices_to_process.remove(itp_index);
-            } else {
-                indices_to_process.select_nth_unstable_by(itp_index, |x, y| d[*y].cmp(&d[*x]));
             }
         }
     }
