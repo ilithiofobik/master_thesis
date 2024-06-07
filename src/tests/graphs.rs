@@ -20,3 +20,13 @@ fn create_bipartite_complete() {
     assert!(graph.has_edge(0, 4));
     assert!(graph.has_edge(0, 5));
 }
+
+#[test]
+fn write_and_read() {
+    let name = "k10_test.json";
+    let k10 = Graph::complete(10);
+    let write = k10.write_to_json(name);
+    assert!(write.is_ok());
+    let read = Graph::read_from_json(name);
+    assert_eq!(k10, read);
+}

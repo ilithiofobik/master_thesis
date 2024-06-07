@@ -1,12 +1,23 @@
+use serde::{Deserialize, Serialize};
+use serde_json::json;
 use std::collections::HashSet;
+use std::fs::File;
 use std::ops::Add;
 use std::ops::Range;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Graph {
     num_of_vertices: usize,
     num_of_edges: usize,
     neighbors: Vec<HashSet<usize>>,
+}
+
+#[derive(Serialize, Deserialize)]
+struct GraphJson {
+    num_of_vertices: usize,
+    num_of_edges: usize,
+    neighbours: Vec<Vec<usize>>,
+    names: Vec<String>,
 }
 
 pub struct DirectedGraph {
@@ -221,6 +232,45 @@ impl Graph {
             for to in tos.iter().filter(|&to| from < *to) {
                 println!("{} <-> {}", from, to);
             }
+        }
+    }
+
+    pub fn write_to_json(&self, filename: &str) -> serde_json::Result<()> {
+        let graph = json!({
+            "num_of_vertices": self.num_of_vertices,
+            "num_of_edges": self.num_of_edges,
+            "neighbors": self.neighbors.iter().map(|set| set.iter().cloned().collect::<Vec<usize>>()).collect::<Vec<Vec<usize>>>(),
+        }
+        );
+        serde_json::to_writer(&File::create(filename).unwrap(), &graph)
+    }
+
+    pub fn read_from_json(filename: &str) -> Graph {
+        let data = std::fs::read_to_string(filename).expect("Unable to read file");
+        let json: serde_json::Value =
+            serde_json::from_str(&data).expect("JSON does not have correct format.");
+
+        let num_of_vertices = json["num_of_vertices"].as_u64().unwrap() as usize;
+        let num_of_edges = json["num_of_edges"].as_u64().unwrap() as usize;
+
+        let neighbors = json["neighbors"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|value| {
+                value
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .map(|value| value.as_u64().unwrap() as usize)
+                    .collect::<HashSet<usize>>()
+            })
+            .collect::<Vec<HashSet<usize>>>();
+
+        Graph {
+            num_of_vertices,
+            num_of_edges,
+            neighbors,
         }
     }
 }

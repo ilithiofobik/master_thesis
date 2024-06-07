@@ -33,15 +33,15 @@ pub mod cacti;
 /// This module contains approximation algorithm for MPS problem using Poranen's algorithm.
 pub mod poranen;
 
-/// # Facial walks
-///
-/// This module contains an exact algorithm for MPS based on facial walks.
-pub mod facial_walks;
+// /// # Facial walks
+// ///
+// /// This module contains an exact algorithm for MPS based on facial walks.
+// pub mod facial_walks;
 
-/// # Schnyder
-///
-/// This module contains an exact algorithm for MPS based the Schnyder poset characterization of planar graphs.
-pub mod schnyder;
+// /// # Schnyder
+// ///
+// /// This module contains an exact algorithm for MPS based the Schnyder poset characterization of planar graphs.
+// pub mod schnyder;
 
 /// # Union find
 ///

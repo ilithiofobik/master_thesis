@@ -17,7 +17,10 @@ pub mod poranen;
 pub mod triangle_listing;
 
 #[cfg(test)]
-pub mod schnyder;
+pub mod input_generation;
 
-#[cfg(test)]
-pub mod facial_walks;
+// #[cfg(test)]
+// pub mod schnyder;
+
+// #[cfg(test)]
+// pub mod facial_walks;

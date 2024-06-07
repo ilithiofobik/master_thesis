@@ -10,11 +10,6 @@ fn is_graphical(d_seq: &[usize]) -> bool {
     let mut left_sum = 0;
     let mut d_sorted = d_seq.to_vec();
     d_sorted.sort_by(|a, b| b.cmp(a));
-    let durfee_num = d_sorted
-        .iter()
-        .enumerate()
-        .filter(|&(i, &di)| i <= di)
-        .count();
     let max_deg = d_sorted[0];
 
     // sum from i to n
@@ -41,7 +36,11 @@ fn is_graphical(d_seq: &[usize]) -> bool {
         }
     }
 
-    for (k, dk) in d_sorted.iter().enumerate().take(durfee_num) {
+    for (k, &dk) in d_sorted.iter().enumerate() {
+        if k > dk {
+            break;
+        }
+
         left_sum += dk;
         let p = biggest_i.get(k + 2).unwrap_or(&Some(k)).unwrap_or(k).max(k);
 
