@@ -1,4 +1,5 @@
 use crate::graphs::Graph;
+use crate::mps_alg::*;
 
 struct MatchMerge {
     n: usize,
@@ -297,4 +298,45 @@ pub fn poranen_mps(g: &Graph) -> Graph {
     }
 
     mm.mps
+}
+
+pub struct CalinescuMps {}
+pub struct SchmidMps {}
+pub struct MyMps {}
+pub struct PoranenMps {}
+
+impl MpsAlgorithm for CalinescuMps {
+    fn maximum_planar_subgraph(g: &Graph) {
+        calinescu_basic_mps(g)
+    }
+    fn name() {
+        "Calinescu"
+    }
+}
+
+impl MpsAlgorithm for SchmidMps {
+    fn maximum_planar_subgraph(g: &Graph) {
+        schmid_d4_mps(g)
+    }
+    fn name() {
+        "Schmid"
+    }
+}
+
+impl MpsAlgorithm for MyMps {
+    fn maximum_planar_subgraph(g: &Graph) {
+        my_mps(g)
+    }
+    fn name() {
+        "My"
+    }
+}
+
+impl MpsAlgorithm for PoranenMps {
+    fn maximum_planar_subgraph(g: &Graph) {
+        poranen_mps(g)
+    }
+    fn name() {
+        "Poranen"
+    }
 }

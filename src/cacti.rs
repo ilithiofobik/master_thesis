@@ -102,4 +102,8 @@ impl MpsAlgorithm for CactiApproximation {
         connect_cactus(g, &mut result, &mut c);
         result
     }
+
+    fn name() -> &'static str {
+        "oldCactiApproximation"
+    }
 }
