@@ -1,6 +1,7 @@
 use crate::graphs::Graph;
+use crate::rand_graphs::*;
 
-#[test]
+//#[test]
 fn generate_complete() {
     let small = (1..100).map(|n| 10 * n).collect::<Vec<usize>>();
     let large = (1..=100).map(|n| 100 * n).collect::<Vec<usize>>();
@@ -11,5 +12,30 @@ fn generate_complete() {
         let name = format!("k{}_test.json", n);
         let write = graph.write_to_json(&name);
         assert!(write.is_ok());
+    }
+}
+
+// #[test]
+fn generate_regular() {
+    for n in (1..=100).map(|n| 100usize * n) {
+        let d_seq = vec![3; n];
+        for k in 0..10 {
+            let graph = bliztstein_generation(&d_seq).unwrap();
+            let name = format!("3regular_n{}_test_{}.json", n, k);
+            let write = graph.write_to_json(&name);
+            assert!(write.is_ok());
+        }
+    }
+}
+
+#[test]
+fn generate_pareto() {
+    for n in (1..=100).map(|n| 100usize * n) {
+        for k in 0..10 {
+            let graph = random_pareto_graph(n, 2.0).unwrap();
+            let name = format!("pareto_n{}_test_{}.json", n, k);
+            let write = graph.write_to_json(&name);
+            assert!(write.is_ok());
+        }
     }
 }

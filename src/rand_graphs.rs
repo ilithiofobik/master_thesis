@@ -61,26 +61,6 @@ fn is_graphical_i_j(d_seq: &mut [usize], i: usize, j: usize) -> bool {
     result
 }
 
-fn pop_minimum(d: &[usize], indices: &mut Vec<usize>) -> Option<usize> {
-    if indices.is_empty() {
-        return None;
-    }
-
-    let n = indices.len();
-    let mut min = d[indices[0]];
-    let mut min_index = 0;
-
-    for i in 1..n {
-        if d[indices[i]] < min {
-            min = d[indices[i]];
-            min_index = i;
-        }
-    }
-
-    indices.swap(min_index, n - 1);
-    indices.pop()
-}
-
 // Based on "A Sequential Importance Sampling Algorithm for Generating Random Graphs with Prescribed Degrees"
 // by J. Bliztstein and P. Diaconis
 pub fn bliztstein_generation(d_in: &[usize]) -> Result<Graph, &'static str> {
@@ -96,8 +76,9 @@ pub fn bliztstein_generation(d_in: &[usize]) -> Result<Graph, &'static str> {
         .enumerate()
         .filter_map(|(i, &di)| if di > 0 { Some(i) } else { None })
         .collect::<Vec<usize>>();
+    indices_to_process.sort_by(|a, b| d[*b].cmp(&d[*a]));
 
-    while let Some(i) = pop_minimum(&d, &mut indices_to_process) {
+    while let Some(i) = indices_to_process.pop() {
         let mut not_having_edge = indices_to_process.clone();
 
         while d[i] > 0 {
@@ -129,6 +110,8 @@ pub fn bliztstein_generation(d_in: &[usize]) -> Result<Graph, &'static str> {
 
             if d[j] == 0 {
                 indices_to_process.remove(itp_index);
+            } else {
+                indices_to_process.select_nth_unstable_by(itp_index, |x, y| d[*y].cmp(&d[*x]));
             }
         }
     }
@@ -157,4 +140,42 @@ pub fn general_random_graph(
     });
 
     Ok(graph)
+}
+
+pub fn random_regular_graph(n: usize, d: usize) -> Result<Graph, &'static str> {
+    let d_seq = vec![d; n];
+    bliztstein_generation(&d_seq)
+}
+
+fn pareto_value(n: usize, alpha: f64) -> usize {
+    let beta = 1.0 - (n as f64 - 1.0).powf(-alpha);
+    let y = fastrand::f64();
+    (1.0 - beta * y).powf(-1.0 / alpha).round() as usize
+}
+
+fn generate_pareto_sequence(n: usize, alpha: f64) -> Vec<usize> {
+    let mut result = vec![0; n];
+    let mut even: usize = 0;
+
+    for i in 0..n {
+        let v = pareto_value(n - 1, alpha);
+        even = even ^ (v & 1);
+        result[i] = v;
+    }
+
+    let mut change_index = 0;
+
+    while even == 1 || !is_graphical(&result) {
+        let v = pareto_value(n - 1, alpha);
+        even = even ^ (v & 1);
+        result[change_index] = v;
+        change_index = (change_index + 1) % n;
+    }
+
+    result
+}
+
+pub fn random_pareto_graph(n: usize, alpha: f64) -> Result<Graph, &'static str> {
+    let d_seq = generate_pareto_sequence(n, alpha);
+    bliztstein_generation(&d_seq)
 }
