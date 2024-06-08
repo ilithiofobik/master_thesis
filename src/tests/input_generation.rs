@@ -43,15 +43,14 @@ fn generate_pareto() {
     }
 }
 
-#[test]
-fn test_regular_algorithms() {
-    let mut output_file = File::create("results/3regular_output.txt").unwrap();
+fn test_named_approx_algorithms(name: &str) {
+    let mut output_file = File::create(format!("results/{}_output.txt", name)).unwrap();
     let algorithms: Vec<Box<dyn MpsAlgorithm>> =
         vec![CalinescuMps {}, SchmidMps {}, MyMps {}, PoranenMps {}];
 
     for n in (100..=10000).step_by(100) {
         for k in 1..=9 {
-            let filename = format!("3regular_n{}_test_{}.json", n, k);
+            let filename = format!("{}_n{}_test_{}.json", name, n, k);
             let graph = open_graph(&filename)?;
 
             for alg in algorithms.iter() {
@@ -71,4 +70,10 @@ fn test_regular_algorithms() {
             }
         }
     }
+}
+
+#[test]
+fn test_approx_algorithms() {
+    test_named_approx_algorithms("3regular");
+    test_named_approx_algorithms("pareto");
 }
