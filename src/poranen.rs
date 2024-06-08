@@ -306,37 +306,37 @@ pub struct MyMps {}
 pub struct PoranenMps {}
 
 impl MpsAlgorithm for CalinescuMps {
-    fn maximum_planar_subgraph(g: &Graph) {
+    fn maximum_planar_subgraph(g: &Graph) -> Graph {
         calinescu_basic_mps(g)
     }
-    fn name() {
+    fn name() -> &'static str {
         "Calinescu"
     }
 }
 
 impl MpsAlgorithm for SchmidMps {
-    fn maximum_planar_subgraph(g: &Graph) {
+    fn maximum_planar_subgraph(g: &Graph) -> Graph {
         schmid_d4_mps(g)
     }
-    fn name() {
+    fn name() -> &'static str {
         "Schmid"
     }
 }
 
 impl MpsAlgorithm for MyMps {
-    fn maximum_planar_subgraph(g: &Graph) {
+    fn maximum_planar_subgraph(g: &Graph) -> Graph {
         my_mps(g)
     }
-    fn name() {
+    fn name() -> &'static str {
         "My"
     }
 }
 
 impl MpsAlgorithm for PoranenMps {
-    fn maximum_planar_subgraph(g: &Graph) {
+    fn maximum_planar_subgraph(g: &Graph) -> Graph {
         poranen_mps(g)
     }
-    fn name() {
+    fn name() -> &'static str {
         "Poranen"
     }
 }

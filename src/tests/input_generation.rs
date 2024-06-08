@@ -55,15 +55,15 @@ fn test_named_approx_algorithms(name: &str) {
 
             for alg in algorithms.iter() {
                 let start = Instant::now();
-                let result = alg.maximum_planar_subgraph(&graph);
+                let result = alg.maximum_planar_subgraph(&graph).num_of_edges();
                 let duration = start.elapsed();
                 writeln!(
                     output_file,
-                    "{},{},{},{:?},{},{}",
+                    "{},{},{},{},{},{}",
                     filename,
                     n,
                     k,
-                    duration,
+                    duration.as_millis(),
                     result,
                     alg.name()
                 )?;
