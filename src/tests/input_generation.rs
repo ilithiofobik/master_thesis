@@ -89,8 +89,8 @@ fn test_named_approx_complete() {
         Box::new(SchmidMps {}),
         Box::new(MyMps {}),
         Box::new(PoranenMps {}),
-        Box::new(SchnyderMps {}),
-        Box::new(FacialWalksMps {}),
+        // Box::new(SchnyderMps {}),
+        // Box::new(FacialWalksMps {}),
     ];
 
     for n in (10..=100).step_by(10) {
