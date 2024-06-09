@@ -1,0 +1,7 @@
+complete_n3_test_0,3,0,7009500,3,Schnyder
+complete_n3_test_0,3,0,537400,3,FacialWalks
+complete_n3_test_1,3,1,2612000,3,Schnyder
+complete_n3_test_1,3,1,614600,3,FacialWalks
+complete_n3_test_2,3,2,3402600,3,Schnyder
+complete_n3_test_2,3,2,543600,3,FacialWalks
+complete_n13_test_0,13,0,27393770300,33,Schnyder
