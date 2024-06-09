@@ -1,6 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
+
 def draw_graph(quantity, inputname, func):
     # Load the CSV file
     filename = f'{inputname.lower()}_output.txt'
@@ -19,7 +20,7 @@ def draw_graph(quantity, inputname, func):
 
     algorithms = ['Poranen', 'My', 'Schmid', 'Calinescu']
     colors = ['royalblue', 'darkorange', 'forestgreen', 'crimson']
-    names = ['Poranen\'s Rule', 'New Rule', 'Schmid\'s Rule', 'Calinescu\'s Rule']
+    names = [r'$\mathsf{CA}_P$', r'$\mathsf{CA}_W$', r'$\mathsf{CA}_S$', r'$\mathsf{CA}$']
     marker = 'o' if family == 'complete' else '.'
     coeff = 0.001 if quantity == 'time' else 1
 
@@ -33,9 +34,9 @@ def draw_graph(quantity, inputname, func):
         optimal_values = 3 * unique_n - 6
         # minimum_values = 0.388 * optimal_values
         minimum_values2 = 0.393 * optimal_values
-        ax1.plot(unique_n, optimal_values, label='Optimal solution', color='deeppink', linestyle='dotted', marker=marker)
+        ax1.plot(unique_n, optimal_values, label=r'$\mathsf{OPT}$', color='deeppink', linestyle='dotted', marker=marker)
         # plt.plot(unique_n, minimum_values, label='7/18 * Optimal solution', color='rebeccapurple', linestyle='dotted', marker=marker)
-        ax1.plot(unique_n, minimum_values2, label='13/33 * Optimal solution', color='fuchsia', linestyle='dotted', marker=marker)
+        ax1.plot(unique_n, minimum_values2, label=r'$\frac{13}{33}\mathsf{OPT}$', color='fuchsia', linestyle='dotted', marker=marker)
 
 
     if quantity == 'time':

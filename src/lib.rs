@@ -12,6 +12,7 @@ pub mod mps_alg;
 ///
 /// This module contains a planarity testing algorithm.
 pub mod planarity;
+// pub mod new_planarity;
 
 /// # Random Graphs
 ///
