@@ -1,8 +1,12 @@
-use crate::cacti::*;
+use crate::facial_walks::*;
 use crate::graphs::Graph;
 use crate::mps_alg::*;
 use crate::poranen::*;
 use crate::rand_graphs::*;
+use crate::schnyder::*;
+use std::fs::File;
+use std::io::Write;
+use std::time::Instant;
 
 //#[test]
 fn generate_complete() {
@@ -45,13 +49,17 @@ fn generate_pareto() {
 
 fn test_named_approx_algorithms(name: &str) {
     let mut output_file = File::create(format!("results/{}_output.txt", name)).unwrap();
-    let algorithms: Vec<Box<dyn MpsAlgorithm>> =
-        vec![CalinescuMps {}, SchmidMps {}, MyMps {}, PoranenMps {}];
+    let algorithms: Vec<Box<dyn MpsAlgorithm>> = vec![
+        Box::new(CalinescuMps {}),
+        Box::new(SchmidMps {}),
+        Box::new(MyMps {}),
+        Box::new(PoranenMps {}),
+    ];
 
     for n in (100..=10000).step_by(100) {
-        for k in 1..=9 {
+        for k in 0..=9 {
             let filename = format!("{}_n{}_test_{}.json", name, n, k);
-            let graph = open_graph(&filename)?;
+            let graph = Graph::read_from_json(&filename);
 
             for alg in algorithms.iter() {
                 let start = Instant::now();
@@ -63,16 +71,52 @@ fn test_named_approx_algorithms(name: &str) {
                     filename,
                     n,
                     k,
-                    duration.as_millis(),
+                    duration.as_nanos(),
                     result,
                     alg.name()
-                )?;
+                )
+                .unwrap();
             }
         }
     }
 }
 
 #[test]
+fn test_named_approx_complete() {
+    let mut output_file = File::create(format!("results/complete_output.txt")).unwrap();
+    let algorithms: Vec<Box<dyn MpsAlgorithm>> = vec![
+        Box::new(CalinescuMps {}),
+        Box::new(SchmidMps {}),
+        Box::new(MyMps {}),
+        Box::new(PoranenMps {}),
+        Box::new(SchnyderMps {}),
+        Box::new(FacialWalksMps {}),
+    ];
+
+    for n in (10..=100).step_by(10) {
+        let graph = Graph::complete(n);
+        for k in 0..=9 {
+            for alg in algorithms.iter() {
+                let start = Instant::now();
+                let result = alg.maximum_planar_subgraph(&graph).num_of_edges();
+                let duration = start.elapsed();
+                writeln!(
+                    output_file,
+                    "{},{},{},{},{},{}",
+                    format!("complete_n{}_test_{}", n, k),
+                    n,
+                    k,
+                    duration.as_nanos(),
+                    result,
+                    alg.name()
+                )
+                .unwrap();
+            }
+        }
+    }
+}
+
+//#[test]
 fn test_approx_algorithms() {
     test_named_approx_algorithms("3regular");
     test_named_approx_algorithms("pareto");

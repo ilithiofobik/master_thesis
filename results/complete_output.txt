@@ -1,0 +1,5 @@
+complete_n10_test_0,10,0,49300,13,Calinescu
+complete_n10_test_0,10,0,123400,15,Schmid
+complete_n10_test_0,10,0,270600,15,My
+complete_n10_test_0,10,0,47800,17,Poranen
+complete_n10_test_0,10,0,16215016500,24,Schnyder

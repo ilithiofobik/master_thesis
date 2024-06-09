@@ -1,7 +1,7 @@
-use std::collections::HashMap;
-
 use crate::graphs::Graph;
+use crate::mps_alg::*;
 use good_lp::*;
+use std::collections::HashMap;
 
 fn sum_s_over_e(edges: &Vec<(usize, usize)>, s: &HashMap<(usize, usize), Variable>) -> Expression {
     edges.iter().fold(Expression::from(0), |acc, e| acc + s[e])
@@ -256,4 +256,15 @@ pub fn facial_walks_mps(g: &Graph) -> Graph {
     }
 
     mps
+}
+
+pub struct FacialWalksMps {}
+
+impl MpsAlgorithm for FacialWalksMps {
+    fn maximum_planar_subgraph(&self, g: &Graph) -> Graph {
+        facial_walks_mps(g)
+    }
+    fn name(&self) -> &'static str {
+        "FacialWalks"
+    }
 }

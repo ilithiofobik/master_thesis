@@ -26,7 +26,7 @@ pub mod triangle_listing;
 /// # Cacti
 ///
 /// This module contains approximation algorithm for MPS problem using cacti algorithms.
-pub mod cacti;
+//pub mod cacti;
 
 /// # Poranen
 ///
@@ -36,12 +36,12 @@ pub mod poranen;
 // /// # Facial walks
 // ///
 // /// This module contains an exact algorithm for MPS based on facial walks.
-// pub mod facial_walks;
+pub mod facial_walks;
 
 // /// # Schnyder
 // ///
 // /// This module contains an exact algorithm for MPS based the Schnyder poset characterization of planar graphs.
-// pub mod schnyder;
+pub mod schnyder;
 
 /// # Union find
 ///

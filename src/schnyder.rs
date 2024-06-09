@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::graphs::Graph;
+use crate::mps_alg::*;
 use good_lp::*;
 
 pub fn schnyder_mps(g: &Graph) -> Graph {
@@ -131,4 +132,15 @@ pub fn schnyder_mps(g: &Graph) -> Graph {
     }
 
     mps
+}
+
+pub struct SchnyderMps {}
+
+impl MpsAlgorithm for SchnyderMps {
+    fn maximum_planar_subgraph(&self, g: &Graph) -> Graph {
+        schnyder_mps(g)
+    }
+    fn name(&self) -> &'static str {
+        "Schnyder"
+    }
 }
