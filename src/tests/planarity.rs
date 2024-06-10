@@ -1,6 +1,13 @@
+use crate::facial_walks::*;
 use crate::graphs::Graph;
+use crate::mps_alg::*;
 use crate::planarity::*;
-use crate::rand_graphs::bliztstein_generation;
+use crate::poranen::*;
+use crate::rand_graphs::*;
+use crate::schnyder::*;
+use std::fs::File;
+use std::io::Write;
+use std::time::Instant;
 
 #[test]
 fn splitting_complete_graph() {
@@ -55,19 +62,19 @@ fn k23_test() {
     assert!(is_planar(&graph));
 }
 
-// // #[test]
-// fn k33_test() {
-//     let graph = Graph::bipartite_complete(3, 3);
-//     graph.print_edges();
-//     assert!(!is_planar(&graph));
-// }
+#[test]
+fn k33_test() {
+    let graph = Graph::bipartite_complete(3, 3);
+    graph.print_edges();
+    assert!(!is_planar(&graph));
+}
 
-// // #[test]
-// fn k34_test() {
-//     let graph = Graph::bipartite_complete(3, 4);
-//     graph.print_edges();
-//     assert!(!is_planar(&graph));
-// }
+#[test]
+fn k34_test() {
+    let graph = Graph::bipartite_complete(3, 4);
+    graph.print_edges();
+    assert!(!is_planar(&graph));
+}
 
 #[test]
 fn k33_minus_edge_test() {
@@ -99,4 +106,49 @@ fn tarjan_test() {
     graph.add_edge(6, 7);
     graph.add_edge(7, 8);
     assert!(is_planar(&graph));
+}
+
+#[test]
+fn test_named_approx_planarity() {
+    let algorithms: Vec<Box<dyn MpsAlgorithm>> = vec![
+        Box::new(CalinescuMps {}),
+        Box::new(SchmidMps {}),
+        Box::new(MyMps {}),
+        Box::new(PoranenMps {}),
+    ];
+
+    for n in 1..=10 {
+        let pareto = random_pareto_graph(100 * n, 2.0).unwrap();
+        let regular = random_regular_graph(100 * n, 3).unwrap();
+        let complete = Graph::complete(n);
+
+        for alg in algorithms.iter() {
+            let p_result = alg.maximum_planar_subgraph(&pareto);
+            let r_result = alg.maximum_planar_subgraph(&regular);
+            let c_result = alg.maximum_planar_subgraph(&complete);
+
+            assert!(is_planar(&p_result));
+            assert!(is_planar(&r_result));
+            assert!(is_planar(&c_result));
+        }
+    }
+}
+
+#[test]
+fn test_named_exact_planarity() {
+    let algorithms: Vec<Box<dyn MpsAlgorithm>> =
+        vec![Box::new(SchnyderMps {}), Box::new(FacialWalksMps {})];
+
+    for n in [4, 6] {
+        let regular = random_regular_graph(n, 3).unwrap();
+        let complete = Graph::complete(n);
+
+        for alg in algorithms.iter() {
+            let r_result = alg.maximum_planar_subgraph(&regular);
+            let c_result = alg.maximum_planar_subgraph(&complete);
+
+            assert!(is_planar(&r_result));
+            assert!(is_planar(&c_result));
+        }
+    }
 }

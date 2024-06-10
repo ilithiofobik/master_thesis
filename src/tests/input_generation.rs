@@ -128,7 +128,7 @@ fn test_named_approx_complete_exact() {
         Box::new(FacialWalksMps {}),
     ];
 
-    for n in (3..=20) {
+    for n in 3..=20 {
         let graph = Graph::complete(n);
         for k in 0..3 {
             for alg in algorithms.iter() {
@@ -151,22 +151,22 @@ fn test_named_approx_complete_exact() {
     }
 }
 
-#[test]
+// #[test]
 fn test_named_approx_regular_exact() {
     let mut output_file = File::create(format!("results/new_exact_regular_output.txt")).unwrap();
     let algorithms: Vec<Box<dyn MpsAlgorithm>> = vec![
-        // Box::new(CalinescuMps {}),
-        // Box::new(SchmidMps {}),
-        // Box::new(MyMps {}),
-        // Box::new(PoranenMps {}),
+        Box::new(CalinescuMps {}),
+        Box::new(SchmidMps {}),
+        Box::new(MyMps {}),
+        Box::new(PoranenMps {}),
         Box::new(SchnyderMps {}),
         Box::new(FacialWalksMps {}),
     ];
 
     for n in (4..=20).step_by(2) {
         let d_in = vec![3; n];
-        let graph = bliztstein_generation(d_in);
         for k in 0..3 {
+            let graph = bliztstein_generation(&d_in).unwrap();
             for alg in algorithms.iter() {
                 let start = Instant::now();
                 let result = alg.maximum_planar_subgraph(&graph).num_of_edges();

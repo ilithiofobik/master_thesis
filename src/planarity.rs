@@ -1,4 +1,5 @@
 use crate::graphs::Graph;
+use rustworkx_core::petgraph;
 use std::collections::HashMap;
 
 #[derive(Clone, Copy, PartialEq, Default)]
@@ -368,8 +369,13 @@ pub fn is_planar(graph: &Graph) -> bool {
     }
 
     println!("Running full planarity test");
-    let mut planarity = Planarity::new(graph);
-    planarity.is_planar()
+    let edges = graph
+        .all_edges()
+        .iter()
+        .map(|&(u, v)| (u as u32, v as u32))
+        .collect::<Vec<_>>();
+    let petgraph = petgraph::graph::UnGraph::<usize, ()>::from_edges(&edges);
+    rustworkx_core::planar::is_planar(&petgraph)
 }
 
 pub fn split_graph_into_connected(graph: &Graph) -> Vec<Graph> {
