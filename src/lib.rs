@@ -19,20 +19,10 @@ pub mod planarity;
 /// This module contains functions for generating random graphs.
 pub mod rand_graphs;
 
-/// # Triangle Listing
+/// # Match and merge
 ///
-/// This module contains an algorithm for listing all triangles in a graph.
-pub mod triangle_listing;
-
-/// # Cacti
-///
-/// This module contains approximation algorithm for MPS problem using cacti algorithms.
-//pub mod cacti;
-
-/// # Poranen
-///
-/// This module contains approximation algorithm for MPS problem using Poranen's algorithm.
-pub mod poranen;
+/// This module contains approximation algorithms for MPS problem using match and merge framework.
+pub mod match_merge;
 
 // /// # Facial walks
 // ///
@@ -43,11 +33,6 @@ pub mod facial_walks;
 // ///
 // /// This module contains an exact algorithm for MPS based the Schnyder poset characterization of planar graphs.
 pub mod schnyder;
-
-/// # Union find
-///
-/// This module contains a union-find data structure.
-pub mod union_find;
 
 /// # Tests
 ///

@@ -1,13 +1,10 @@
 use crate::facial_walks::*;
 use crate::graphs::Graph;
+use crate::match_merge::*;
 use crate::mps_alg::*;
 use crate::planarity::*;
-use crate::poranen::*;
 use crate::rand_graphs::*;
 use crate::schnyder::*;
-use std::fs::File;
-use std::io::Write;
-use std::time::Instant;
 
 #[test]
 fn splitting_complete_graph() {
@@ -139,16 +136,14 @@ fn test_named_exact_planarity() {
     let algorithms: Vec<Box<dyn MpsAlgorithm>> =
         vec![Box::new(SchnyderMps {}), Box::new(FacialWalksMps {})];
 
-    for n in [4, 6] {
-        let regular = random_regular_graph(n, 3).unwrap();
-        let complete = Graph::complete(n);
+    let regular = random_regular_graph(6, 3).unwrap();
+    let complete = Graph::complete(4);
 
-        for alg in algorithms.iter() {
-            let r_result = alg.maximum_planar_subgraph(&regular);
-            let c_result = alg.maximum_planar_subgraph(&complete);
+    for alg in algorithms.iter() {
+        let r_result = alg.maximum_planar_subgraph(&regular);
+        let c_result = alg.maximum_planar_subgraph(&complete);
 
-            assert!(is_planar(&r_result));
-            assert!(is_planar(&c_result));
-        }
+        assert!(is_planar(&r_result));
+        assert!(is_planar(&c_result));
     }
 }

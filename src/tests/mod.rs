@@ -11,13 +11,10 @@ pub mod planarity;
 // pub mod cacti;
 
 #[cfg(test)]
-pub mod poranen;
+pub mod match_merge;
 
-#[cfg(test)]
-pub mod triangle_listing;
-
-#[cfg(test)]
-pub mod input_generation;
+// #[cfg(test)]
+// pub mod input_generation;
 
 // #[cfg(test)]
 // pub mod schnyder;

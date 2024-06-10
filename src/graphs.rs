@@ -20,13 +20,6 @@ struct GraphJson {
     names: Vec<String>,
 }
 
-pub struct DirectedGraph {
-    num_of_vertices: usize,
-    num_of_edges: usize,
-    in_neighbors: Vec<HashSet<usize>>,
-    out_neighbors: Vec<HashSet<usize>>,
-}
-
 impl Default for Graph {
     fn default() -> Self {
         Self::new()
@@ -271,122 +264,6 @@ impl Graph {
             num_of_vertices,
             num_of_edges,
             neighbors,
-        }
-    }
-}
-
-impl Default for DirectedGraph {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl DirectedGraph {
-    pub fn new() -> Self {
-        DirectedGraph {
-            num_of_vertices: 0,
-            num_of_edges: 0,
-            in_neighbors: Vec::new(),
-            out_neighbors: Vec::new(),
-        }
-    }
-
-    pub fn empty(num_of_vertices: usize) -> Self {
-        let mut in_neighbors = Vec::new();
-        let mut out_neighbors = Vec::new();
-        for _ in 0..num_of_vertices {
-            in_neighbors.push(HashSet::new());
-            out_neighbors.push(HashSet::new());
-        }
-
-        DirectedGraph {
-            num_of_vertices,
-            num_of_edges: 0,
-            in_neighbors,
-            out_neighbors,
-        }
-    }
-
-    fn is_valid_vertex(&self, vertex: usize) -> bool {
-        vertex < self.num_of_vertices
-    }
-
-    pub fn has_edge(&self, from: usize, to: usize) -> bool {
-        self.out_neighbors[from].contains(&to)
-    }
-
-    pub fn add_vertex(&mut self) -> usize {
-        self.in_neighbors.push(HashSet::new());
-        self.out_neighbors.push(HashSet::new());
-        self.num_of_vertices += 1;
-        self.num_of_vertices - 1
-    }
-
-    pub fn add_edge(&mut self, from: usize, to: usize) -> bool {
-        // both vertices must be valid
-        if !self.is_valid_vertex(from) || !self.is_valid_vertex(to) {
-            println!("Invalid vertices: {} -> {}", from, to);
-            return false;
-        }
-
-        // no self loops nor multi-edges
-        if from == to || self.out_neighbors[from].contains(&to) {
-            println!("Self loop or multi-edge: {} -> {}", from, to);
-            return false;
-        }
-
-        self.out_neighbors[from].insert(to);
-        self.in_neighbors[to].insert(from);
-        self.num_of_edges += 1;
-
-        true
-    }
-
-    pub fn remove_edge(&mut self, from: usize, to: usize) -> bool {
-        // both vertices must be valid
-        if !self.is_valid_vertex(from) || !self.is_valid_vertex(to) {
-            println!("Invalid vertices: {} -> {}", from, to);
-            return false;
-        }
-
-        // must exist
-        if !self.out_neighbors[from].contains(&to) {
-            println!("Edge does not exist: {} -> {}", from, to);
-            return false;
-        }
-
-        self.out_neighbors[from].remove(&to);
-        self.in_neighbors[to].remove(&from);
-        self.num_of_edges -= 1;
-
-        true
-    }
-
-    pub fn num_of_vertices(&self) -> usize {
-        self.num_of_vertices
-    }
-
-    pub fn vertices(&self) -> Range<usize> {
-        0..self.num_of_vertices
-    }
-
-    pub fn num_of_edges(&self) -> usize {
-        self.num_of_edges
-    }
-
-    pub fn in_neighbors(&self, vertex: usize) -> Option<&HashSet<usize>> {
-        if self.is_valid_vertex(vertex) {
-            Some(&self.in_neighbors[vertex])
-        } else {
-            None
-        }
-    }
-
-    pub fn out_neighbors(&self, vertex: usize) -> Option<&HashSet<usize>> {
-        if self.is_valid_vertex(vertex) {
-            Some(&self.out_neighbors[vertex])
-        } else {
-            None
         }
     }
 }
