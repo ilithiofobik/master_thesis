@@ -3,14 +3,38 @@ use crate::mps_alg::*;
 use good_lp::*;
 use std::collections::HashMap;
 
+/// Sums the variables associated with the given edges.
+///
+/// # Arguments
+/// * `edges` - A vector of edges represented as tuples of vertex indices.
+/// * `s` - A hashmap mapping edges to their corresponding variables.
+///
+/// # Returns
+/// * An expression representing the sum of the variables associated with the edges.
 fn sum_s_over_e(edges: &Vec<(usize, usize)>, s: &HashMap<(usize, usize), Variable>) -> Expression {
     edges.iter().fold(Expression::from(0), |acc, e| acc + s[e])
 }
 
+/// Sums the given variables.
+///
+/// # Arguments
+/// * `x` - A vector of variables.
+///
+/// # Returns
+/// * An expression representing the sum of the variables.
 fn sum_x_over_i(x: &Vec<Variable>) -> Expression {
     x.iter().fold(Expression::from(0), |acc, x_i| acc + x_i)
 }
 
+/// Sums the variables associated with the given faces and arcs.
+///
+/// # Arguments
+/// * `c` - A vector of hashmaps mapping arcs to their corresponding variables for each face.
+/// * `faces` - A slice of face indices.
+/// * `arcs` - A slice of arcs represented as tuples of vertex indices.
+///
+/// # Returns
+/// * An expression representing the sum of the variables associated with the faces and arcs.
 fn sum_c_over_faces_arcs(
     c: &Vec<HashMap<(usize, usize), Variable>>,
     faces: &[usize],
@@ -25,6 +49,16 @@ fn sum_c_over_faces_arcs(
     result
 }
 
+/// Sums the variables associated with the given vertex and its neighbors.
+///
+/// # Arguments
+/// * `p` - A hashmap mapping vertex triples to their corresponding variables.
+/// * `v` - A vertex index.
+/// * `us` - A slice of neighbor vertex indices.
+/// * `ws` - A slice of neighbor vertex indices.
+///
+/// # Returns
+/// * An expression representing the sum of the variables associated with the vertex and its neighbors.
 fn sum_p_over_vertices(
     p: &HashMap<(usize, usize, usize), Variable>,
     v: usize,
@@ -43,6 +77,13 @@ fn sum_p_over_vertices(
     result
 }
 
+/// Computes the double power set of the given elements.
+///
+/// # Arguments
+/// * `elements` - A slice of elements.
+///
+/// # Returns
+/// * A vector of tuples, where each tuple contains two subsets of the elements.
 fn double_power_set(elements: &[usize]) -> Vec<(Vec<usize>, Vec<usize>)> {
     let mut result = Vec::new();
     let n = elements.len();
@@ -62,6 +103,13 @@ fn double_power_set(elements: &[usize]) -> Vec<(Vec<usize>, Vec<usize>)> {
     result
 }
 
+/// Converts an arc to a standardized edge representation (with the smaller vertex index first).
+///
+/// # Arguments
+/// * `arc` - A tuple representing an arc.
+///
+/// # Returns
+/// * A tuple representing the edge with the smaller vertex index first.
 fn edge(arc: (usize, usize)) -> (usize, usize) {
     if arc.0 < arc.1 {
         arc
@@ -70,6 +118,13 @@ fn edge(arc: (usize, usize)) -> (usize, usize) {
     }
 }
 
+/// Computes the maximum planar subgraph using facial walks.
+///
+/// # Arguments
+/// * `g` - The input graph.
+///
+/// # Returns
+/// * The maximum planar subgraph of the input graph.
 pub fn facial_walks_mps(g: &Graph) -> Graph {
     let mut vars = ProblemVariables::new();
 
@@ -258,12 +313,25 @@ pub fn facial_walks_mps(g: &Graph) -> Graph {
     mps
 }
 
+/// A struct representing the facial walks MPS algorithm.
 pub struct FacialWalksMps {}
 
 impl MpsAlgorithm for FacialWalksMps {
+    /// Computes the maximum planar subgraph of the given graph.
+    ///
+    /// # Arguments
+    /// * `g` - The input graph.
+    ///
+    /// # Returns
+    /// * The maximum planar subgraph of the input graph.
     fn maximum_planar_subgraph(&self, g: &Graph) -> Graph {
         facial_walks_mps(g)
     }
+
+    /// Returns the name of the algorithm.
+    ///
+    /// # Returns
+    /// * A string slice representing the name of the algorithm.
     fn name(&self) -> &'static str {
         "FacialWalks"
     }

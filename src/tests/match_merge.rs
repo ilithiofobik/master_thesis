@@ -1,5 +1,6 @@
 use crate::graphs::Graph;
 use crate::match_merge::*;
+use crate::mps_alg::MpsAlgorithm;
 
 #[test]
 fn calinescu_basic_mps_complete_test() {
@@ -7,7 +8,8 @@ fn calinescu_basic_mps_complete_test() {
         println!("cacti_approximation_complete_test n = {}", n);
 
         let graph = Graph::complete(n);
-        let mps = calinescu_basic_mps(&graph);
+        let alg = CalinescuMps {};
+        let mps = alg.maximum_planar_subgraph(&graph);
 
         let mut available_components = n;
         let mut num_of_edges = 0;
@@ -30,7 +32,8 @@ fn calinescu_basic_mps_complete_test() {
 fn schmid_d4_mps_complete_test() {
     for (n, m) in [(3, 3), (4, 5), (5, 6), (6, 8), (7, 10), (8, 11), (9, 13)] {
         let graph = Graph::complete(n);
-        let mps = schmid_d4_mps(&graph);
+        let alg = SchmidMps {};
+        let mps = alg.maximum_planar_subgraph(&graph);
         assert_eq!(mps.num_of_vertices(), n);
         assert_eq!(mps.num_of_edges(), m);
     }
@@ -40,7 +43,8 @@ fn schmid_d4_mps_complete_test() {
 fn my_mps_complete_test() {
     for (n, m) in [(3, 3), (4, 5), (5, 7), (6, 8), (7, 10), (8, 12), (9, 14)] {
         let graph = Graph::complete(n);
-        let mps = my_mps(&graph);
+        let alg = MyMps {};
+        let mps = alg.maximum_planar_subgraph(&graph);
         assert_eq!(mps.num_of_vertices(), n);
         assert_eq!(mps.num_of_edges(), m);
     }
@@ -50,7 +54,8 @@ fn my_mps_complete_test() {
 fn poranen_mps_complete_test() {
     for (n, m) in [(3, 3), (4, 5), (5, 7), (6, 9), (7, 11), (8, 13), (9, 15)] {
         let graph = Graph::complete(n);
-        let mps = poranen_mps(&graph);
+        let alg = PoranenMps {};
+        let mps = alg.maximum_planar_subgraph(&graph);
         assert_eq!(mps.num_of_vertices(), n);
         assert_eq!(mps.num_of_edges(), m);
     }

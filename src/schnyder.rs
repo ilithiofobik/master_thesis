@@ -4,6 +4,13 @@ use crate::graphs::Graph;
 use crate::mps_alg::*;
 use good_lp::*;
 
+/// Computes the maximum planar subgraph using the Schnyder algorithm.
+///
+/// # Arguments
+/// * `g` - A reference to the input graph.
+///
+/// # Returns
+/// * A `Graph` representing the maximum planar subgraph.
 pub fn schnyder_mps(g: &Graph) -> Graph {
     let mut vars = ProblemVariables::new();
 
@@ -41,6 +48,7 @@ pub fn schnyder_mps(g: &Graph) -> Graph {
         }
     }
 
+    // Define the objective function to maximize the number of selected edges
     let mut objective = Expression::from(0);
     for e in edges.iter() {
         objective += s[e];
@@ -48,7 +56,7 @@ pub fn schnyder_mps(g: &Graph) -> Graph {
 
     let mut problem = vars.maximise(objective).using(highs);
 
-    // Euler criterion
+    // Apply the Euler criterion
     if n > 2 {
         let mut edges_sum = Expression::from(0);
         for e in edges.iter() {
@@ -58,7 +66,7 @@ pub fn schnyder_mps(g: &Graph) -> Graph {
         problem = problem.with(constraint!(edges_sum <= bound));
     }
 
-    // 2a
+    // Constraint 2a: s[e] <= a[0][v][e] + a[1][v][e] + a[2][v][e]
     for e in edges.iter() {
         for v in 0..n {
             if v == e.0 || v == e.1 {
@@ -68,7 +76,7 @@ pub fn schnyder_mps(g: &Graph) -> Graph {
         }
     }
 
-    // 2b
+    // Constraint 2b: a[i][v][e] <= t[i][u][v]
     for i in 0..3 {
         for e in edges.iter() {
             for u in [e.0, e.1] {
@@ -82,7 +90,7 @@ pub fn schnyder_mps(g: &Graph) -> Graph {
         }
     }
 
-    // 2c
+    // Constraint 2c: t[0][u][v] + t[1][u][v] + t[2][u][v] <= 2.1
     for u in 0..n {
         for v in 0..n {
             if u == v {
@@ -92,7 +100,7 @@ pub fn schnyder_mps(g: &Graph) -> Graph {
         }
     }
 
-    // 2d
+    // Constraint 2d: t[i][u][v] + t[i][v][w] - 1 <= t[i][u][w]
     for i in 0..3 {
         for u in 0..n {
             for v in 0..n {
@@ -109,7 +117,7 @@ pub fn schnyder_mps(g: &Graph) -> Graph {
         }
     }
 
-    // 2e
+    // Constraint 2e: t[i][u][v] + t[i][v][u] == 1
     for i in 0..3 {
         for u in 0..n {
             for v in 0..n {
@@ -134,12 +142,25 @@ pub fn schnyder_mps(g: &Graph) -> Graph {
     mps
 }
 
+/// A struct representing the Schnyder MPS algorithm.
 pub struct SchnyderMps {}
 
 impl MpsAlgorithm for SchnyderMps {
+    /// Computes the maximum planar subgraph using the Schnyder algorithm.
+    ///
+    /// # Arguments
+    /// * `g` - A reference to the input graph.
+    ///
+    /// # Returns
+    /// * A `Graph` representing the maximum planar subgraph.
     fn maximum_planar_subgraph(&self, g: &Graph) -> Graph {
         schnyder_mps(g)
     }
+
+    /// Returns the name of the algorithm.
+    ///
+    /// # Returns
+    /// * A string slice representing the name of the algorithm.
     fn name(&self) -> &'static str {
         "Schnyder"
     }

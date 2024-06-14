@@ -1,6 +1,12 @@
 use crate::graphs::Graph;
 
-// Based on Erdos–Gallai theorem.
+/// Determines if a degree sequence is graphical based on the Erdos–Gallai theorem.
+///
+/// # Arguments
+/// * `d_seq` - A slice of integers representing the degree sequence.
+///
+/// # Returns
+/// * `true` if the degree sequence is graphical, `false` otherwise.
 fn is_graphical(d_seq: &[usize]) -> bool {
     if d_seq.iter().sum::<usize>() & 1 == 1 {
         return false;
@@ -52,6 +58,15 @@ fn is_graphical(d_seq: &[usize]) -> bool {
     true
 }
 
+/// Checks if removing an edge between vertices i and j keeps the degree sequence graphical.
+///
+/// # Arguments
+/// * `d_seq` - A mutable slice of integers representing the degree sequence.
+/// * `i` - The index of the first vertex.
+/// * `j` - The index of the second vertex.
+///
+/// # Returns
+/// * `true` if the degree sequence remains graphical after removing the edge, `false` otherwise.
 fn is_graphical_i_j(d_seq: &mut [usize], i: usize, j: usize) -> bool {
     d_seq[i] -= 1;
     d_seq[j] -= 1;
@@ -61,8 +76,13 @@ fn is_graphical_i_j(d_seq: &mut [usize], i: usize, j: usize) -> bool {
     result
 }
 
-// Based on "A Sequential Importance Sampling Algorithm for Generating Random Graphs with Prescribed Degrees"
-// by J. Bliztstein and P. Diaconis
+/// Generates a random graph with a given degree sequence using the Blitzstein-Diaconis algorithm.
+///
+/// # Arguments
+/// * `d_in` - A slice of integers representing the degree sequence.
+///
+/// # Returns
+/// * `Ok(Graph)` if the degree sequence is graphical and a graph is generated, `Err(&'static str)` otherwise.
 pub fn bliztstein_generation(d_in: &[usize]) -> Result<Graph, &'static str> {
     if !is_graphical(d_in) {
         return Err("The degree sequence is not graphical.");
@@ -119,6 +139,14 @@ pub fn bliztstein_generation(d_in: &[usize]) -> Result<Graph, &'static str> {
     Ok(graph)
 }
 
+/// Generates a general random graph with a specified number of vertices and edges.
+///
+/// # Arguments
+/// * `num_of_vertices` - The number of vertices in the graph.
+/// * `num_of_edges` - The number of edges in the graph.
+///
+/// # Returns
+/// * `Ok(Graph)` if the graph is successfully generated, `Err(&'static str)` if the number of edges is too large.
 pub fn general_random_graph(
     num_of_vertices: usize,
     num_of_edges: usize,
@@ -142,17 +170,41 @@ pub fn general_random_graph(
     Ok(graph)
 }
 
+/// Generates a random regular graph with a specified number of vertices and degree.
+///
+/// # Arguments
+/// * `n` - The number of vertices in the graph.
+/// * `d` - The degree of each vertex.
+///
+/// # Returns
+/// * `Ok(Graph)` if the graph is successfully generated, `Err(&'static str)` if the degree sequence is not graphical.
 pub fn random_regular_graph(n: usize, d: usize) -> Result<Graph, &'static str> {
     let d_seq = vec![d; n];
     bliztstein_generation(&d_seq)
 }
 
+/// Generates a Pareto-distributed value.
+///
+/// # Arguments
+/// * `n` - The number of values.
+/// * `alpha` - The Pareto distribution parameter.
+///
+/// # Returns
+/// * A `usize` value generated according to the Pareto distribution.
 fn pareto_value(n: usize, alpha: f64) -> usize {
     let beta = 1.0 - (n as f64 - 1.0).powf(-alpha);
     let y = fastrand::f64();
     (1.0 - beta * y).powf(-1.0 / alpha).round() as usize
 }
 
+/// Generates a Pareto-distributed degree sequence.
+///
+/// # Arguments
+/// * `n` - The number of vertices.
+/// * `alpha` - The Pareto distribution parameter.
+///
+/// # Returns
+/// * A vector of `usize` values representing the degree sequence.
 fn generate_pareto_sequence(n: usize, alpha: f64) -> Vec<usize> {
     let mut result = vec![0; n];
     let mut even: usize = 0;
@@ -175,7 +227,17 @@ fn generate_pareto_sequence(n: usize, alpha: f64) -> Vec<usize> {
     result
 }
 
+/// Generates a random graph with a Pareto degree distribution.
+///
+/// # Arguments
+/// * `n` - The number of vertices in the graph.
+/// * `alpha` - The Pareto distribution parameter.
+///
+/// # Returns
+/// * `Ok(Graph)` if the graph is successfully generated, `Err(&'static str)` if the degree sequence is not graphical.
 pub fn random_pareto_graph(n: usize, alpha: f64) -> Result<Graph, &'static str> {
     let d_seq = generate_pareto_sequence(n, alpha);
     bliztstein_generation(&d_seq)
 }
+
+// TODO: przerobić żeby brał najmniejsze degree zawsze
