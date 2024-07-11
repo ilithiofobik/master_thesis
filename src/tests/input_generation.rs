@@ -8,22 +8,8 @@ use std::fs::File;
 use std::io::Write;
 use std::time::Instant;
 
-//#[test]
-fn generate_complete() {
-    let small = (1..100).map(|n| 10 * n).collect::<Vec<usize>>();
-    let large = (1..=100).map(|n| 100 * n).collect::<Vec<usize>>();
-    let both = small.iter().chain(large.iter());
-
-    for n in both {
-        let graph = Graph::complete(*n);
-        let name = format!("k{}_test.json", n);
-        let write = graph.write_to_json(&name);
-        assert!(write.is_ok());
-    }
-}
-
 // #[test]
-fn generate_regular() {
+fn generate_3regular() {
     for n in (1..=100).map(|n| 100usize * n) {
         let d_seq = vec![3; n];
         for k in 0..10 {
@@ -63,8 +49,9 @@ fn test_named_approx_algorithms(name: &str) {
 
             for alg in algorithms.iter() {
                 let start = Instant::now();
-                let result = alg.maximum_planar_subgraph(&graph).num_of_edges();
+                let result = alg.maximum_planar_subgraph(&graph);
                 let duration = start.elapsed();
+                assert!(result.is_planar());
                 writeln!(
                     output_file,
                     "{},{},{},{},{},{}",
@@ -72,7 +59,7 @@ fn test_named_approx_algorithms(name: &str) {
                     n,
                     k,
                     duration.as_nanos(),
-                    result,
+                    result.num_of_edges(),
                     alg.name()
                 )
                 .unwrap();
@@ -83,14 +70,12 @@ fn test_named_approx_algorithms(name: &str) {
 
 // #[test]
 fn test_named_approx_complete() {
-    let mut output_file = File::create(format!("results/new_complete_output.txt")).unwrap();
+    let mut output_file = File::create(format!("results/complete_output.txt")).unwrap();
     let algorithms: Vec<Box<dyn MpsAlgorithm>> = vec![
         Box::new(CalinescuMps {}),
         Box::new(SchmidMps {}),
         Box::new(MyMps {}),
         Box::new(PoranenMps {}),
-        // Box::new(SchnyderMps {}),
-        // Box::new(FacialWalksMps {}),
     ];
 
     for n in (10..=100).step_by(5) {
@@ -98,8 +83,9 @@ fn test_named_approx_complete() {
         for k in 0..5 {
             for alg in algorithms.iter() {
                 let start = Instant::now();
-                let result = alg.maximum_planar_subgraph(&graph).num_of_edges();
+                let result = alg.maximum_planar_subgraph(&graph);
                 let duration = start.elapsed();
+                assert!(result.is_planar());
                 writeln!(
                     output_file,
                     "{},{},{},{},{},{}",
@@ -107,42 +93,7 @@ fn test_named_approx_complete() {
                     n,
                     k,
                     duration.as_nanos(),
-                    result,
-                    alg.name()
-                )
-                .unwrap();
-            }
-        }
-    }
-}
-
-//#[test]
-fn test_named_approx_complete_exact() {
-    let mut output_file = File::create(format!("results/new_exact_complete_output.txt")).unwrap();
-    let algorithms: Vec<Box<dyn MpsAlgorithm>> = vec![
-        // Box::new(CalinescuMps {}),
-        // Box::new(SchmidMps {}),
-        // Box::new(MyMps {}),
-        // Box::new(PoranenMps {}),
-        Box::new(SchnyderMps {}),
-        Box::new(FacialWalksMps {}),
-    ];
-
-    for n in 3..=20 {
-        let graph = Graph::complete(n);
-        for k in 0..3 {
-            for alg in algorithms.iter() {
-                let start = Instant::now();
-                let result = alg.maximum_planar_subgraph(&graph).num_of_edges();
-                let duration = start.elapsed();
-                writeln!(
-                    output_file,
-                    "{},{},{},{},{},{}",
-                    format!("complete_n{}_test_{}", n, k),
-                    n,
-                    k,
-                    duration.as_nanos(),
-                    result,
+                    result.num_of_edges(),
                     alg.name()
                 )
                 .unwrap();
@@ -152,8 +103,38 @@ fn test_named_approx_complete_exact() {
 }
 
 // #[test]
-fn test_named_approx_regular_exact() {
-    let mut output_file = File::create(format!("results/new_exact_regular_output.txt")).unwrap();
+fn test_named_exact_complete() {
+    let mut output_file = File::create(format!("results/exact_complete_output.txt")).unwrap();
+    let algorithms: Vec<Box<dyn MpsAlgorithm>> =
+        vec![Box::new(SchnyderMps {}), Box::new(FacialWalksMps {})];
+
+    for n in 3..=14 {
+        let graph = Graph::complete(n);
+        for k in 0..3 {
+            for alg in algorithms.iter() {
+                let start = Instant::now();
+                let result = alg.maximum_planar_subgraph(&graph);
+                let duration = start.elapsed();
+                assert!(result.is_planar());
+                writeln!(
+                    output_file,
+                    "{},{},{},{},{},{}",
+                    format!("complete_n{}_test_{}", n, k),
+                    n,
+                    k,
+                    duration.as_nanos(),
+                    result.num_of_edges(),
+                    alg.name()
+                )
+                .unwrap();
+            }
+        }
+    }
+}
+
+// #[test]
+fn test_named_mixed_regular() {
+    let mut output_file = File::create(format!("results/mixed_regular_output.txt")).unwrap();
     let algorithms: Vec<Box<dyn MpsAlgorithm>> = vec![
         Box::new(CalinescuMps {}),
         Box::new(SchmidMps {}),
@@ -169,8 +150,9 @@ fn test_named_approx_regular_exact() {
             let graph = bliztstein_generation(&d_in).unwrap();
             for alg in algorithms.iter() {
                 let start = Instant::now();
-                let result = alg.maximum_planar_subgraph(&graph).num_of_edges();
+                let result = alg.maximum_planar_subgraph(&graph);
                 let duration = start.elapsed();
+                assert!(result.is_planar());
                 writeln!(
                     output_file,
                     "{},{},{},{},{},{}",
@@ -178,7 +160,7 @@ fn test_named_approx_regular_exact() {
                     n,
                     k,
                     duration.as_nanos(),
-                    result,
+                    result.num_of_edges(),
                     alg.name()
                 )
                 .unwrap();
@@ -187,7 +169,7 @@ fn test_named_approx_regular_exact() {
     }
 }
 
-//#[test]
+// #[test]
 fn test_approx_algorithms() {
     test_named_approx_algorithms("3regular");
     test_named_approx_algorithms("pareto");

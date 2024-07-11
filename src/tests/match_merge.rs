@@ -5,8 +5,6 @@ use crate::mps_alg::MpsAlgorithm;
 #[test]
 fn calinescu_basic_mps_complete_test() {
     for n in 3..10 {
-        println!("cacti_approximation_complete_test n = {}", n);
-
         let graph = Graph::complete(n);
         let alg = CalinescuMps {};
         let mps = alg.maximum_planar_subgraph(&graph);
